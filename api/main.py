@@ -2,6 +2,8 @@ import os
 
 from flask import Flask
 
+from views import api
+
 def create_app() -> Flask:
     from models import db
 
@@ -13,6 +15,8 @@ def create_app() -> Flask:
     db.init_app(app)
     with app.app_context():
         db.create_all()
+
+    app.register_blueprint(api)
 
     return app
 
