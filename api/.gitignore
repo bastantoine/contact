@@ -5,3 +5,6 @@
 
 # DB file
 app.db
+
+# Config file
+config.json
