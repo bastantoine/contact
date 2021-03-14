@@ -2,6 +2,13 @@ from json import loads
 from typing import Any, Dict, List
 
 
+class MissingRequiredValueException(Exception):
+    pass
+
+class WrongTypeException(Exception):
+    pass
+
+
 class Config:
     """ Main config class
 
@@ -47,6 +54,8 @@ class Field:
         """
         """
         if self.required:
+            if not value:
+                raise MissingRequiredValueException(f'Missing value for required parameter {self.name}')
             return self.field_type.check(value, additional_params=self.additional_params)
         if value:
             return self.field_type.check(value, additional_params=self.additional_params)
@@ -66,19 +75,26 @@ class FieldType:
         """
         raise NotImplementedError
 
+    def _raise_wrong_type_error(self, value):
+        raise WrongTypeException(f"Wrong type for {self.__class__.__name__} with value {value} ({type(value).__name__})")
+
 
 class IntegerFieldType(FieldType):
     """Check the value is an integer
     """
     def check(self, value: Any, additional_params: dict={}) -> bool:
-        return isinstance(value, int)
+        if not isinstance(value, int):
+            self._raise_wrong_type_error(value)
+        return True
 
 
 class StrFieldType(FieldType):
     """Check the value is a str
     """
     def check(self, value: Any, additional_params: dict={}) -> bool:
-        return isinstance(value, str)
+        if not isinstance(value, str):
+            self._raise_wrong_type_error(value)
+        return True
 
 
 class ListFieldType(FieldType):
@@ -95,7 +111,9 @@ class ListFieldType(FieldType):
     True
     """
     def check(self, value: Any, additional_params: dict={}) -> bool:
-        return isinstance(value, list) and self._check_additional_params(value, additional_params)
+        if not isinstance(value, list):
+            self._raise_wrong_type_error(value)
+        return self._check_additional_params(value, additional_params)
 
     def _check_additional_params(self, value: Any, additional_params: dict) -> bool:
         inner_type = additional_params.get('inner_type')
@@ -119,7 +137,9 @@ class ImageFieldType(FieldType):
     True
     """
     def check(self, value: Any, additional_params: dict={}) -> bool:
-        return isinstance(value, str) and value.find('.') != -1 and self._check_additional_params(value, additional_params)
+        if not isinstance(value, str):
+            self._raise_wrong_type_error(value)
+        return value.find('.') != -1 and self._check_additional_params(value, additional_params)
 
     def _check_additional_params(self, value: Any, additional_params: dict) -> bool:
         accepted_types = additional_params.get('accepted_types')
