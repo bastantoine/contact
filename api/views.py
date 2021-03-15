@@ -1,5 +1,5 @@
 from datetime import datetime
-from json import dumps
+from json import (dumps, loads)
 import os
 
 from dotenv import load_dotenv
@@ -53,9 +53,27 @@ def contacts_get_post():
     db.session.refresh(new_contact)
     return jsonify(new_contact.format_infos())
 
-@api.route('/contact/<int:id_contact>', methods=['DELETE'])
-def contacts_delete(id_contact: int):
+@api.route('/contact/<int:id_contact>', methods=['DELETE', 'PUT'])
+def contacts_delete_put(id_contact: int):
     contact = Contact.query.get_or_404(id_contact)
-    db.session.delete(contact)
+
+    if request.method == 'DELETE':
+        db.session.delete(contact)
+        db.session.commit()
+        return ('', 200)
+
+    if not request.json:
+        abort(400, 'Missing data')
+
+    new_infos = request.json
+    config = Config(os.environ.get('CONFIG_FILE', 'config.json'))
+    try:
+        config.check(new_infos, fields_to_skip=['id'])
+    except (MissingRequiredValueException, WrongTypeException) as exp:
+        abort(400, str(exp))
+
+    current_infos = loads(contact.infos)
+    contact.infos = dumps(dict(current_infos, **new_infos))
     db.session.commit()
-    return ('', 200)
+    db.session.refresh(contact)
+    return jsonify(contact.format_infos())
