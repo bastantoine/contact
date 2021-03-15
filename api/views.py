@@ -52,3 +52,10 @@ def contacts_get_post():
 
     db.session.refresh(new_contact)
     return jsonify(new_contact.format_infos())
+
+@api.route('/contact/<int:id_contact>', methods=['DELETE'])
+def contacts_delete(id_contact: int):
+    contact = Contact.query.get_or_404(id_contact)
+    db.session.delete(contact)
+    db.session.commit()
+    return ('', 200)
