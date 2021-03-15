@@ -8,3 +8,6 @@ app.db
 
 # Config file
 config.json
+
+# Env file
+.env
