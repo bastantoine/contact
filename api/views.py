@@ -37,7 +37,7 @@ def contacts_get_post():
 
     config = Config(os.environ.get('CONFIG_FILE', 'config.json'))
     try:
-        config.check(infos)
+        config.check(infos, fields_to_skip=['id'])
     except (MissingRequiredValueException, WrongTypeException) as exp:
         abort(400, str(exp))
 

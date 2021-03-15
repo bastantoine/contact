@@ -19,8 +19,8 @@ class Config:
             config = loads(config_file.read())
         self.fields: List['Field'] = [Field.load_from_dict(field_name, params) for field_name, params in config.items()]
 
-    def check(self, value: dict) -> bool:
-        return all(field.check(value.get(field.name)) for field in self.fields)
+    def check(self, value: dict, fields_to_skip: list=[]) -> bool:
+        return all(field.check(value.get(field.name)) for field in self.fields if field.name not in fields_to_skip)
 
 
 class Field:
