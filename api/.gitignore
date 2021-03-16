@@ -1,0 +1,13 @@
+# Python venv
+*venv*/*
+**/__pycache__/*
+**/*.pyc
+
+# DB file
+app.db
+
+# Config file
+config.json
+
+# Env file
+.env
