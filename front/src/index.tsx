@@ -3,10 +3,13 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import Home from './components/Home';
 import reportWebVitals from './reportWebVitals';
+import { Container } from "react-bootstrap";
 
 ReactDOM.render(
   <React.StrictMode>
-    <Home />
+    <Container>
+      <Home />
+    </Container>
   </React.StrictMode>,
   document.getElementById('root')
 );
