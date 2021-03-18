@@ -113,11 +113,54 @@ class Home extends Component<PropsType, StateType> {
         return input ? input.charAt(0).toUpperCase() + input.slice(1) : input;
     }
 
+    private renderSideBarContactList() {
+        return <ListGroup>
+            {this.state.contacts.map(contact => {
+                return <ListGroup.Item
+                    action
+                    href={`#display-infos-contact-${contact[this.state.config.primary_key]}`}
+                    key={`list-group-item-${contact[this.state.config.primary_key]}`}
+                >
+                    {this.renderDisplayedListTitle(contact, this.state.config.main_attributes)}
+                </ListGroup.Item>
+            })}
+        </ListGroup>
+    }
+
+    private renderMainContactInfos() {
+        return <Tab.Content>
+            {this.state.contacts.map(contact => {
+                return <Tab.Pane
+                    eventKey={`#display-infos-contact-${contact[this.state.config.primary_key]}`}
+                    key={`tab-pane-${contact[this.state.config.primary_key]}`}
+                >
+                    <dl>
+                        {this.state.config.attributes.map((attribute, index) => {
+                            // Display only if the attribute is not the primary key
+                            if (attribute !== this.state.config.primary_key) {
+                                let has_display_name = this.state.config.raw_config[attribute].display_name
+                                // This weird syntax tells the TS compiler that the allowed
+                                // types are the keys of _ATTRIBUTE_TYPE_COMPONENT_MAPPING
+                                // From https://stackoverflow.com/a/57088282/
+                                let attribute_type: keyof typeof ATTRIBUTE_TYPE_COMPONENT_MAPPING = this.state.config.raw_config[attribute].type;
+                                let ComponentToUse = ATTRIBUTE_TYPE_COMPONENT_MAPPING[attribute_type] || TextComponent;
+                                return <React.Fragment key={`infos-contact-${contact[this.state.config.primary_key]}-${attribute}-${index}`}>
+                                    <dt>{has_display_name ? this.state.config.raw_config[attribute].display_name : this.upperFirstLetter(attribute)}</dt>
+                                    <dd><ComponentToUse value={contact[attribute] ? contact[attribute] : ''} extra_params={this.state.config.raw_config[attribute].additional_type_parameters}></ComponentToUse></dd>
+                                </React.Fragment>
+                            }
+                            return <></>
+                        })}
+                    </dl>
+                </Tab.Pane>
+            })}
+        </Tab.Content>
+    }
+
     render() {
-        const { isLoaded, isConfigLoaded, error, contacts, config } = this.state
-        if (error) {
-            return <div>Erreur {error.status} : {error.responseText}</div>
-        } else if (!isLoaded && !isConfigLoaded) {
+        if (this.state.error) {
+            return <div>Erreur {this.state.error.status} : {this.state.error.responseText}</div>
+        } else if (!this.state.isLoaded && !this.state.isConfigLoaded) {
             return <div>Chargement...</div>
         } else {
             return <Row>
@@ -125,46 +168,10 @@ class Home extends Component<PropsType, StateType> {
                     <Tab.Container>
                         <Row>
                             <Col sm={4}>
-                                <ListGroup>
-                                    {contacts.map(contact => {
-                                        return <ListGroup.Item
-                                            action
-                                            href={`#display-infos-contact-${contact[config.primary_key]}`}
-                                            key={`list-group-item-${contact[config.primary_key]}`}
-                                        >
-                                            {this.renderDisplayedListTitle(contact, config.main_attributes)}
-                                        </ListGroup.Item>
-                                    })}
-                                </ListGroup>
+                                {this.renderSideBarContactList()}
                             </Col>
                             <Col sm={8}>
-                                <Tab.Content>
-                                    {contacts.map(contact => {
-                                        return <Tab.Pane
-                                            eventKey={`#display-infos-contact-${contact[config.primary_key]}`}
-                                            key={`tab-pane-${contact[config.primary_key]}`}
-                                        >
-                                            <dl>
-                                                {config.attributes.map((attribute, index) => {
-                                                    // Display only if the attribute is not the primary key
-                                                    if (attribute !== config.primary_key) {
-                                                        let has_display_name = config.raw_config[attribute].display_name
-                                                        // This weird syntax tells the TS compiler that the allowed
-                                                        // types are the keys of _ATTRIBUTE_TYPE_COMPONENT_MAPPING
-                                                        // From https://stackoverflow.com/a/57088282/
-                                                        let attribute_type: keyof typeof ATTRIBUTE_TYPE_COMPONENT_MAPPING = config.raw_config[attribute].type;
-                                                        let ComponentToUse = ATTRIBUTE_TYPE_COMPONENT_MAPPING[attribute_type] || TextComponent;
-                                                        return <React.Fragment key={`infos-contact-${contact[config.primary_key]}-${attribute}-${index}`}>
-                                                            <dt>{has_display_name ? config.raw_config[attribute].display_name : this.upperFirstLetter(attribute)}</dt>
-                                                            <dd><ComponentToUse value={contact[attribute] ? contact[attribute] : ''} extra_params={config.raw_config[attribute].additional_type_parameters}></ComponentToUse></dd>
-                                                        </React.Fragment>
-                                                    }
-                                                    return <></>
-                                                })}
-                                            </dl>
-                                        </Tab.Pane>
-                                    })}
-                                </Tab.Content>
+                                {this.renderMainContactInfos()}
                             </Col>
                         </Row>
                     </Tab.Container>
