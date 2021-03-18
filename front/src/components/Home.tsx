@@ -108,6 +108,10 @@ class Home extends Component<PropsType, StateType> {
         return values.join(' ')
     }
 
+    private upperFirstLetter(input: string): string {
+        return input ? input.charAt(0).toUpperCase() + input.slice(1) : input;
+    }
+
     render() {
         const { isLoaded, isConfigLoaded, error, contacts, config } = this.state
         if (error) {
@@ -145,7 +149,7 @@ class Home extends Component<PropsType, StateType> {
                                                     if (attribute !== config.primary_key) {
                                                         let has_display_name = config.raw_config[attribute].display_name
                                                         return <React.Fragment key={`infos-contact-${contact[config.primary_key]}-${attribute}-${index}`}>
-                                                            <dt>{has_display_name ? config.raw_config[attribute].display_name : attribute}</dt>
+                                                            <dt>{has_display_name ? config.raw_config[attribute].display_name : this.upperFirstLetter(attribute)}</dt>
                                                             <dd>{contact[attribute] ? contact[attribute] : ''}</dd>
                                                         </React.Fragment>
                                                     }
