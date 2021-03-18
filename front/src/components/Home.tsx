@@ -5,6 +5,7 @@ import { Col, ListGroup, Row, Tab } from "react-bootstrap";
 
 import { API_ENDPOINT } from "../config";
 import { join } from "../utils";
+import { ATTRIBUTE_TYPE_COMPONENT_MAPPING, TextComponent } from "./TypeComponents";
 
 type PropsType = {}
 type StateType = {
@@ -148,9 +149,14 @@ class Home extends Component<PropsType, StateType> {
                                                     // Display only if the attribute is not the primary key
                                                     if (attribute !== config.primary_key) {
                                                         let has_display_name = config.raw_config[attribute].display_name
+                                                        // This weird syntax tells the TS compiler that the allowed
+                                                        // types are the keys of _ATTRIBUTE_TYPE_COMPONENT_MAPPING
+                                                        // From https://stackoverflow.com/a/57088282/
+                                                        let attribute_type: keyof typeof ATTRIBUTE_TYPE_COMPONENT_MAPPING = config.raw_config[attribute].type;
+                                                        let ComponentToUse = ATTRIBUTE_TYPE_COMPONENT_MAPPING[attribute_type] || TextComponent;
                                                         return <React.Fragment key={`infos-contact-${contact[config.primary_key]}-${attribute}-${index}`}>
                                                             <dt>{has_display_name ? config.raw_config[attribute].display_name : this.upperFirstLetter(attribute)}</dt>
-                                                            <dd>{contact[attribute] ? contact[attribute] : ''}</dd>
+                                                            <dd><ComponentToUse value={contact[attribute] ? contact[attribute] : ''} extra_params={config.raw_config[attribute].additional_type_parameters}></ComponentToUse></dd>
                                                         </React.Fragment>
                                                     }
                                                     return <></>
