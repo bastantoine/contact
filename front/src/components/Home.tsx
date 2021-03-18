@@ -1,5 +1,7 @@
 import $ from "jquery"
+import React from "react";
 import { Component } from "react";
+import { Col, ListGroup, Row, Tab } from "react-bootstrap";
 
 import { API_ENDPOINT } from "../config";
 import { join } from "../utils";
@@ -99,8 +101,66 @@ class Home extends Component<PropsType, StateType> {
         this.loadContacts();
     }
 
+    renderDisplayedListTitle(contact: any, attributes: string[]) {
+        let values: string[] = []
+        for (let attribute of attributes)
+            values.push(contact[attribute])
+        return values.join(' ')
+    }
+
     render() {
-        return "Hello from Home component!";
+        const { isLoaded, isConfigLoaded, error, contacts, config } = this.state
+        if (error) {
+            return <div>Erreur {error.status} : {error.responseText}</div>
+        } else if (!isLoaded && !isConfigLoaded) {
+            return <div>Chargement...</div>
+        } else {
+            return <Row>
+                <Col lg={12}>
+                    <Tab.Container>
+                        <Row>
+                            <Col sm={4}>
+                                <ListGroup>
+                                    {contacts.map(contact => {
+                                        return <ListGroup.Item
+                                            action
+                                            href={`#display-infos-contact-${contact[config.primary_key]}`}
+                                            key={`list-group-item-${contact[config.primary_key]}`}
+                                        >
+                                            {this.renderDisplayedListTitle(contact, config.main_attributes)}
+                                        </ListGroup.Item>
+                                    })}
+                                </ListGroup>
+                            </Col>
+                            <Col sm={8}>
+                                <Tab.Content>
+                                    {contacts.map(contact => {
+                                        return <Tab.Pane
+                                            eventKey={`#display-infos-contact-${contact[config.primary_key]}`}
+                                            key={`tab-pane-${contact[config.primary_key]}`}
+                                        >
+                                            <dl>
+                                                {config.attributes.map((attribute, index) => {
+                                                    // Display only if the attribute is not the primary key
+                                                    if (attribute !== config.primary_key) {
+                                                        let has_display_name = config.raw_config[attribute].display_name
+                                                        return <React.Fragment key={`infos-contact-${contact[config.primary_key]}-${attribute}-${index}`}>
+                                                            <dt>{has_display_name ? config.raw_config[attribute].display_name : attribute}</dt>
+                                                            <dd>{contact[attribute] ? contact[attribute] : ''}</dd>
+                                                        </React.Fragment>
+                                                    }
+                                                    return <></>
+                                                })}
+                                            </dl>
+                                        </Tab.Pane>
+                                    })}
+                                </Tab.Content>
+                            </Col>
+                        </Row>
+                    </Tab.Container>
+                </Col>
+            </Row>
+        }
     }
 }
 
