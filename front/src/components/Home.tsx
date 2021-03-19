@@ -1,7 +1,7 @@
 import $ from "jquery"
 import React from "react";
 import { Component } from "react";
-import { Col, ListGroup, Row, Tab } from "react-bootstrap";
+import { Button, Col, Form, ListGroup, Row, Tab } from "react-bootstrap";
 
 import { API_ENDPOINT } from "../config";
 import { join } from "../utils";
@@ -124,6 +124,9 @@ class Home extends Component<PropsType, StateType> {
                     {this.renderDisplayedListTitle(contact, this.state.config.main_attributes)}
                 </ListGroup.Item>
             })}
+            <ListGroup.Item action href="#form-add-contact">
+                Add a contact
+            </ListGroup.Item>
         </ListGroup>
     }
 
@@ -154,7 +157,76 @@ class Home extends Component<PropsType, StateType> {
                     </dl>
                 </Tab.Pane>
             })}
+            <Tab.Pane eventKey="#form-add-contact">
+                {this.renderAddContactForm()}
+            </Tab.Pane>
         </Tab.Content>
+    }
+
+    private renderAddContactForm() {
+
+        function findInputTypeFromAttributeType(
+            attribute_type: keyof typeof ATTRIBUTE_TYPE_COMPONENT_MAPPING,
+            // inner_type is used only when attribute_type is a list,
+            // in this case it is the type of the values inside the list
+            inner_type?: keyof typeof ATTRIBUTE_TYPE_COMPONENT_MAPPING
+        ): string {
+            switch (attribute_type) {
+                case "image":
+                    return "file";
+                case "list":
+                    return findInputTypeFromAttributeType(inner_type!);
+                case "email":
+                    return "email";
+                case "url":
+                    return "url";
+                case "long_str":
+                    return "textarea";
+                default:
+                    return "text";
+            }
+        }
+
+        return <Form>
+            {Object.keys(this.state.config.raw_config).map((attribute: string) => {
+                if (attribute !== this.state.config.primary_key) {
+                    const config_attribute = this.state.config.raw_config[attribute];
+                    let has_display_name = config_attribute.display_name;
+                    let displayed_name = has_display_name ? config_attribute.display_name : this.upperFirstLetter(attribute);
+                    let input_type = findInputTypeFromAttributeType(
+                        config_attribute.type,
+                        (config_attribute.additional_type_parameters &&
+                         config_attribute.additional_type_parameters.inner_type
+                        ) || ''
+                    );
+                    let help_text = config_attribute.form_help_text;
+                    return <Form.Group as={Row} controlId={`form-control${attribute}`} key={`form-input-add-contact-${attribute}`}>
+                        <Form.Label column sm={2}>
+                            <p className="text-right">{displayed_name}</p>
+                        </Form.Label>
+                        <Col sm={10}>
+                            {/* Setting 'undefined' as the attribute value allows to not set the attributes when the predicates evaluates to false */}
+                            <Form.Control
+                                as={input_type === "textarea" ? "textarea" : undefined}
+                                rows={input_type === "textarea" ? 3 : undefined}
+                                type={input_type}
+                                name={attribute}
+                                placeholder={displayed_name}
+                                aria-describedby={help_text ? `help-text-form-add-${attribute}` : undefined}
+                            />
+                            {/* Add helper text only if the config has one set */}
+                            {help_text ? <Form.Text id={`help-text-form-add-${attribute}`} muted>{help_text}</Form.Text> : <></>}
+                        </Col>
+                    </Form.Group>
+                }
+                return <></>;
+            })}
+            <Form.Group as={Row}>
+                <Col sm={{ span: 10, offset: 2 }}>
+                    <Button type="submit">Add contact</Button>
+                </Col>
+            </Form.Group>
+        </Form>
     }
 
     render() {
