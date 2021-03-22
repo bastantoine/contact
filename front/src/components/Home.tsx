@@ -3,6 +3,7 @@ import React from "react";
 import { Component } from "react";
 import { Button, Col, Form, ListGroup, Row, Tab } from "react-bootstrap";
 import { Formik } from "formik";
+import * as Yup from "yup";
 
 import { API_ENDPOINT } from "../config";
 import { join } from "../utils";
@@ -188,15 +189,73 @@ class Home extends Component<PropsType, StateType> {
             }
         }
 
-        let initialValues: {[k: string]: any} = {}
-        for (let attribute of Object.keys(this.state.config.raw_config)) {
-            if (attribute !== this.state.config.primary_key)
-                initialValues[attribute] = ''
+        // Helper used to create a validator that will split the values of an
+        // array on the ',' and check each value individually against the schema
+        // passed as parameter.
+        // Taken from https://github.com/jquense/yup/issues/559#issuecomment-518953000
+        function array_validator(inner_type: Yup.BaseSchema): Yup.StringSchema {
+            return Yup.string()
+                .test({
+                    test: function(value: string | undefined) {
+                        if (!value)
+                            return true
+
+                        // Find the first value that doesn't match the given validator
+                        const firstInvalidValue = value
+                            .split(",")
+                            .map(v => v.trim())
+                            .filter(v => v !== '')
+                            .find(v => !inner_type.isValidSync(v));
+
+                        return !firstInvalidValue;
+                    }
+                })
         }
+
+        // Binding table between the types of values we can have in the DB and
+        // the validators provided by Yup. The list type is provided only so
+        // that the TS type checker doesn't complain, but for this case we build
+        // a custom validator based on the inner_type additional parameter
+        // provided in the config.
+        const YUP_TYPE_BINDINGS = {
+            integer: Yup.number(),
+            str: Yup.string(),
+            image: Yup.mixed(),
+            long_str: Yup.string(),
+            url: Yup.string(),
+            email: Yup.string().email(),
+            list: Yup.array(),
+        }
+
+        let shape: {[k: string]: Yup.BaseSchema} = {}
+        let initialValues: {[k: string]: any} = {}
+        // Build the initial values and validation shape
+        // object based on the config provided by the API
+        for (let attribute of Object.keys(this.state.config.raw_config)) {
+            if (attribute !== this.state.config.primary_key) {
+                initialValues[attribute] = ''
+
+                const attribute_config = this.state.config.raw_config[attribute];
+                const attribute_type: keyof typeof YUP_TYPE_BINDINGS = attribute_config.type;
+                let validator: Yup.BaseSchema;
+                if (attribute_type === 'list') {
+                    const inner_type: keyof typeof YUP_TYPE_BINDINGS = attribute_config.additional_type_parameters.inner_type;
+                    validator = array_validator(YUP_TYPE_BINDINGS[inner_type]);
+                } else {
+                    validator = YUP_TYPE_BINDINGS[attribute_type];
+                }
+                if (!!attribute_config.required) {
+                    validator = validator.required('Missing value')
+                }
+                shape[attribute] = validator;
+            }
+        }
+        const validationSchema = Yup.object().shape(shape);
 
         // Base formik form taken from https://hackernoon.com/building-react-forms-with-formik-yup-and-react-bootstrap-with-a-minimal-amount-of-pain-and-suffering-1sfk3xv8
         return <Formik
             initialValues={initialValues}
+            validationSchema={validationSchema}
             onSubmit={(values, { setSubmitting, resetForm }) => {
                 // When button submits form and form is in the process of submitting, submit button is disabled
                 setSubmitting(true);
@@ -216,7 +275,10 @@ class Home extends Component<PropsType, StateType> {
             handleBlur,
             handleSubmit,
             isSubmitting}) => (
-                <Form onSubmit={handleSubmit}>
+                // We need the noValidate so that the browser will not try to
+                // valide the inputs and won't display any error message that
+                // would mess up with the validation we already have.
+                <Form onSubmit={handleSubmit} noValidate>
                     {Object.keys(this.state.config.raw_config).map((attribute: string) => {
                         if (attribute !== this.state.config.primary_key) {
                             const config_attribute = this.state.config.raw_config[attribute];
@@ -246,9 +308,12 @@ class Home extends Component<PropsType, StateType> {
                                         placeholder={displayed_name}
                                         aria-describedby={help_text ? `help-text-form-add-${attribute}` : undefined}
                                         isValid={touched[attribute] && !errors[attribute]}
+                                        isInvalid={!!errors[attribute]}
                                     />
                                     {/* Add helper text only if the config has one set */}
                                     {help_text ? <Form.Text id={`help-text-form-add-${attribute}`} muted>{help_text}</Form.Text> : <></>}
+                                    {/* Add error message if needed */}
+                                    {!!errors[attribute] ? <Form.Control.Feedback type="invalid">{errors[attribute]}</Form.Control.Feedback> : <></>}
                                 </Col>
                             </Form.Group>
                         }
