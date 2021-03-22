@@ -2,6 +2,7 @@ import $ from "jquery"
 import React from "react";
 import { Component } from "react";
 import { Button, Col, Form, ListGroup, Row, Tab } from "react-bootstrap";
+import { Formik } from "formik";
 
 import { API_ENDPOINT } from "../config";
 import { join } from "../utils";
@@ -187,46 +188,80 @@ class Home extends Component<PropsType, StateType> {
             }
         }
 
-        return <Form>
-            {Object.keys(this.state.config.raw_config).map((attribute: string) => {
-                if (attribute !== this.state.config.primary_key) {
-                    const config_attribute = this.state.config.raw_config[attribute];
-                    let has_display_name = config_attribute.display_name;
-                    let displayed_name = has_display_name ? config_attribute.display_name : this.upperFirstLetter(attribute);
-                    let input_type = findInputTypeFromAttributeType(
-                        config_attribute.type,
-                        (config_attribute.additional_type_parameters &&
-                         config_attribute.additional_type_parameters.inner_type
-                        ) || ''
-                    );
-                    let help_text = config_attribute.form_help_text;
-                    return <Form.Group as={Row} controlId={`form-control${attribute}`} key={`form-input-add-contact-${attribute}`}>
-                        <Form.Label column sm={2}>
-                            <p className="text-right">{displayed_name}</p>
-                        </Form.Label>
-                        <Col sm={10}>
-                            {/* Setting 'undefined' as the attribute value allows to not set the attributes when the predicates evaluates to false */}
-                            <Form.Control
-                                as={input_type === "textarea" ? "textarea" : undefined}
-                                rows={input_type === "textarea" ? 3 : undefined}
-                                type={input_type}
-                                name={attribute}
-                                placeholder={displayed_name}
-                                aria-describedby={help_text ? `help-text-form-add-${attribute}` : undefined}
-                            />
-                            {/* Add helper text only if the config has one set */}
-                            {help_text ? <Form.Text id={`help-text-form-add-${attribute}`} muted>{help_text}</Form.Text> : <></>}
+        let initialValues: {[k: string]: any} = {}
+        for (let attribute of Object.keys(this.state.config.raw_config)) {
+            if (attribute !== this.state.config.primary_key)
+                initialValues[attribute] = ''
+        }
+
+        // Base formik form taken from https://hackernoon.com/building-react-forms-with-formik-yup-and-react-bootstrap-with-a-minimal-amount-of-pain-and-suffering-1sfk3xv8
+        return <Formik
+            initialValues={initialValues}
+            onSubmit={(values, { setSubmitting, resetForm }) => {
+                // When button submits form and form is in the process of submitting, submit button is disabled
+                setSubmitting(true);
+                // Simulate submitting to database, shows us values submitted, resets form
+                setTimeout(() => {
+                    alert(JSON.stringify(values, null, 2));
+                    resetForm();
+                    setSubmitting(false);
+                }, 500);
+            }}
+        >
+        {/* Callback function containing Formik state and helpers that handle common form actions */}
+        {({ values,
+            errors,
+            touched,
+            handleChange,
+            handleBlur,
+            handleSubmit,
+            isSubmitting}) => (
+                <Form onSubmit={handleSubmit}>
+                    {Object.keys(this.state.config.raw_config).map((attribute: string) => {
+                        if (attribute !== this.state.config.primary_key) {
+                            const config_attribute = this.state.config.raw_config[attribute];
+                            let has_display_name = config_attribute.display_name;
+                            let displayed_name = has_display_name ? config_attribute.display_name : this.upperFirstLetter(attribute);
+                            let input_type = findInputTypeFromAttributeType(
+                                config_attribute.type,
+                                (config_attribute.additional_type_parameters &&
+                                config_attribute.additional_type_parameters.inner_type
+                                ) || ''
+                            );
+                            let help_text = config_attribute.form_help_text;
+                            return <Form.Group as={Row} controlId={`form-control-${attribute}`} key={`form-input-add-contact-${attribute}`}>
+                                <Form.Label column sm={2}>
+                                    <p className="text-right">{displayed_name}</p>
+                                </Form.Label>
+                                <Col sm={10}>
+                                    {/* Setting 'undefined' as the attribute value allows to not set the attributes when the predicates evaluates to false */}
+                                    <Form.Control
+                                        as={input_type === "textarea" ? "textarea" : undefined}
+                                        rows={input_type === "textarea" ? 3 : undefined}
+                                        type={input_type}
+                                        name={attribute}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        value={values[attribute]}
+                                        placeholder={displayed_name}
+                                        aria-describedby={help_text ? `help-text-form-add-${attribute}` : undefined}
+                                        isValid={touched[attribute] && !errors[attribute]}
+                                    />
+                                    {/* Add helper text only if the config has one set */}
+                                    {help_text ? <Form.Text id={`help-text-form-add-${attribute}`} muted>{help_text}</Form.Text> : <></>}
+                                </Col>
+                            </Form.Group>
+                        }
+                        return <></>;
+                    })}
+                    <Form.Group as={Row}>
+                        <Col sm={{ span: 10, offset: 2 }}>
+                            <Button type="submit" disabled={isSubmitting}>Add contact</Button>
                         </Col>
                     </Form.Group>
-                }
-                return <></>;
-            })}
-            <Form.Group as={Row}>
-                <Col sm={{ span: 10, offset: 2 }}>
-                    <Button type="submit">Add contact</Button>
-                </Col>
-            </Form.Group>
-        </Form>
+                </Form>
+            )}
+    </Formik>
     }
 
     render() {
