@@ -259,12 +259,27 @@ class Home extends Component<PropsType, StateType> {
             onSubmit={(values, { setSubmitting, resetForm }) => {
                 // When button submits form and form is in the process of submitting, submit button is disabled
                 setSubmitting(true);
-                // Simulate submitting to database, shows us values submitted, resets form
-                setTimeout(() => {
-                    alert(JSON.stringify(values, null, 2));
+                for (let attribute of Object.keys(this.state.config.raw_config)) {
+                    const attribute_type: string = this.state.config.raw_config[attribute].type;
+                    if (attribute_type === 'list') {
+                        // Make sure the attributes that expect a
+                        // list receive a list, even if empty
+                        values[attribute] = values[attribute] ? values[attribute].split(',').map((val: string) => val.trim()) : [];
+                    }
+                }
+
+                $.post({
+                    url: join(API_ENDPOINT, 'contact'),
+                    data: JSON.stringify(values),
+                    contentType: 'application/json',
+                }).done((data) => {
+                    let new_contacts = this.state.contacts.slice();
+                    new_contacts.push(data)
+                    this.setState({
+                        contacts: new_contacts,
+                    });
                     resetForm();
-                    setSubmitting(false);
-                }, 500);
+                }).fail((_, textStatus) => console.error(textStatus));
             }}
         >
         {/* Callback function containing Formik state and helpers that handle common form actions */}
