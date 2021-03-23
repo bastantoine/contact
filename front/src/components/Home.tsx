@@ -246,7 +246,7 @@ class Home extends Component<PropsType, StateType> {
         let initialValues: {[k: string]: any} = {}
         // Build the initial values and validation shape
         // object based on the config provided by the API
-        for (let attribute of Object.keys(this.state.config.raw_config)) {
+        for (let attribute of this.state.config.attributes) {
             if (attribute !== this.state.config.primary_key) {
                 initialValues[attribute] = ''
 
@@ -274,7 +274,7 @@ class Home extends Component<PropsType, StateType> {
             onSubmit={(values, { setSubmitting, resetForm }) => {
                 // When button submits form and form is in the process of submitting, submit button is disabled
                 setSubmitting(true);
-                for (let attribute of Object.keys(this.state.config.raw_config)) {
+                for (let attribute of this.state.config.attributes) {
                     const attribute_type: string = this.state.config.raw_config[attribute].type;
                     if (attribute_type === 'list') {
                         // Make sure the attributes that expect a
@@ -309,7 +309,7 @@ class Home extends Component<PropsType, StateType> {
                 // valide the inputs and won't display any error message that
                 // would mess up with the validation we already have.
                 <Form onSubmit={handleSubmit} noValidate>
-                    {Object.keys(this.state.config.raw_config).map((attribute: string) => {
+                    {this.state.config.attributes.map((attribute: string) => {
                         if (attribute !== this.state.config.primary_key) {
                             const config_attribute = this.state.config.raw_config[attribute];
                             let has_display_name = config_attribute.display_name;
