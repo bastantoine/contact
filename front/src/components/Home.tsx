@@ -104,6 +104,18 @@ class Home extends Component<PropsType, StateType> {
         this.loadContacts();
     }
 
+    private deleteContact(id: string|number) {
+        $.ajax({
+            url: join(API_ENDPOINT, 'contact', String(id)),
+            method: 'DELETE'
+        }).done(() => {
+            let filtered_contacts = this.state.contacts.filter((contact) => {
+                return contact[this.state.config.primary_key] !== id
+            })
+            this.setState({contacts: filtered_contacts})
+        })
+    }
+
     renderDisplayedListTitle(contact: any, attributes: string[]) {
         let values: string[] = []
         for (let attribute of attributes)
@@ -157,6 +169,9 @@ class Home extends Component<PropsType, StateType> {
                             return <></>
                         })}
                     </dl>
+                    <Button variant="danger" size="sm" block onClick={() => this.deleteContact(contact[this.state.config.primary_key])}>
+                        Delete the contact
+                    </Button>
                 </Tab.Pane>
             })}
             <Tab.Pane eventKey="#form-add-contact">
