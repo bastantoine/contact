@@ -187,7 +187,7 @@ class Home extends Component<PropsType, StateType> {
                         })}
                     </dl>
                     <Button variant="danger" size="sm" block onClick={() => this.deleteContact(contact[this.state.config.primary_key])}>
-                        Delete the contact
+                        Delete
                     </Button>
                 </Tab.Pane>
             })}
