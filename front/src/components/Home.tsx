@@ -1,12 +1,11 @@
 import $ from "jquery"
-import React from "react";
 import { Component } from "react";
-import { Button, ButtonGroup, Col, ListGroup, Row, Tab } from "react-bootstrap";
+import { Col, ListGroup, Row, Tab } from "react-bootstrap";
 
 import { API_ENDPOINT } from "../config";
 import { join } from "../utils";
-import { ATTRIBUTE_TYPE_COMPONENT_MAPPING, TextComponent } from "./TypeComponents";
 import ContactForm from "./ContactForm";
+import ContactDetails from "./ContactDetails";
 
 type PropsType = {}
 type StateType = {
@@ -156,10 +155,6 @@ class Home extends Component<PropsType, StateType> {
         return values.join(' ')
     }
 
-    private upperFirstLetter(input: string): string {
-        return input ? input.charAt(0).toUpperCase() + input.slice(1) : input;
-    }
-
     private renderSideBarContactList() {
         return <ListGroup>
             {this.state.contacts.map(contact => {
@@ -183,46 +178,16 @@ class Home extends Component<PropsType, StateType> {
         // From https://stackoverflow.com/questions/38394015/how-to-pass-data-from-child-component-to-its-parent-in-reactjs#comment91623247_44467773
         this.addContact = this.addContact.bind(this);
         this.editContact = this.editContact.bind(this);
+        this.deleteContact = this.deleteContact.bind(this);
         return <Tab.Content>
             {this.state.contacts.map(contact => {
-                return <Tab.Pane
-                    eventKey={`#display-infos-contact-${contact[this.state.config.primary_key]}`}
-                    key={`tab-pane-${contact[this.state.config.primary_key]}`}
+                return <ContactDetails
+                    contact={contact}
+                    config={this.state.config}
+                    editContactHandler={this.editContact}
+                    deleteContactHandler={this.deleteContact}
                 >
-                    <dl>
-                        {this.state.config.attributes.map((attribute, index) => {
-                            // Display only if the attribute is not the primary key
-                            if (attribute !== this.state.config.primary_key) {
-                                let has_display_name = this.state.config.raw_config[attribute].display_name
-                                // This weird syntax tells the TS compiler that the allowed
-                                // types are the keys of _ATTRIBUTE_TYPE_COMPONENT_MAPPING
-                                // From https://stackoverflow.com/a/57088282/
-                                let attribute_type: keyof typeof ATTRIBUTE_TYPE_COMPONENT_MAPPING = this.state.config.raw_config[attribute].type;
-                                let ComponentToUse = ATTRIBUTE_TYPE_COMPONENT_MAPPING[attribute_type] || TextComponent;
-                                return <React.Fragment key={`infos-contact-${contact[this.state.config.primary_key]}-${attribute}-${index}`}>
-                                    <dt>{has_display_name ? this.state.config.raw_config[attribute].display_name : this.upperFirstLetter(attribute)}</dt>
-                                    <dd><ComponentToUse value={contact[attribute] ? contact[attribute] : ''} extra_params={this.state.config.raw_config[attribute].additional_type_parameters}></ComponentToUse></dd>
-                                </React.Fragment>
-                            }
-                            return <></>
-                        })}
-                    </dl>
-                    <ButtonGroup>
-                        <Button variant="primary" size="sm">
-                            Edit
-                        </Button>
-                        <Button variant="danger" size="sm" onClick={() => this.deleteContact(contact[this.state.config.primary_key])}>
-                            Delete
-                        </Button>
-                    </ButtonGroup>
-                    {/* $.extend(true, {}, contact) allows to pass a deep copy of
-                        contact. This way, every change made to the values won't
-                        be reflect in the original object. Usefull since we
-                        transform each lists by joining their values with a comma
-                        to show them correctly in the input, but still need
-                        the lists almost everywhere else. */}
-                    <ContactForm initial_value={$.extend(true, {}, contact)} config={this.state.config} submitHandler={((values: {}) => (this.editContact(contact[this.state.config.primary_key], values)))} ></ContactForm>
-                </Tab.Pane>
+                </ContactDetails>
             })}
             <Tab.Pane eventKey="#form-add-contact">
                 <ContactForm initial_value={{}} config={this.state.config} submitHandler={this.addContact} ></ContactForm>
