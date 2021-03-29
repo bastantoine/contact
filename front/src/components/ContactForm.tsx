@@ -13,7 +13,7 @@ type PropsType = {
         primary_key: string,
         raw_config: any,
     },
-    addContactHandler: (values: {}) => JQueryXHR
+    submitHandler: (values: {}) => JQueryXHR
 }
 
 class ContactForm extends Component<PropsType, {}> {
@@ -88,13 +88,19 @@ class ContactForm extends Component<PropsType, {}> {
         // object based on the config provided by the API
         for (let attribute of this.props.config.attributes) {
             if (attribute !== this.props.config.primary_key) {
-                if (this.props.initial_value[attribute] === undefined) {
-                    // Make sure all the attribute have an initial value, even if empty
-                    this.props.initial_value[attribute] = ''
-                }
-
                 const attribute_config = this.props.config.raw_config[attribute];
                 const attribute_type: keyof typeof YUP_TYPE_BINDINGS = attribute_config.type;
+                if (this.props.initial_value[attribute] === undefined) {
+                    // Make sure all the attribute have an initial value, even if empty
+                    this.props.initial_value[attribute] = '';
+                }
+                if (attribute_type === 'list') {
+                    if (typeof this.props.initial_value[attribute] === 'string') {
+                        this.props.initial_value[attribute] = [this.props.initial_value[attribute]]
+                    }
+                    this.props.initial_value[attribute] = this.props.initial_value[attribute].join(', ');
+                }
+
                 let validator: Yup.BaseSchema;
                 if (attribute_type === 'list') {
                     const inner_type: keyof typeof YUP_TYPE_BINDINGS = attribute_config.additional_type_parameters.inner_type;
@@ -125,9 +131,10 @@ class ContactForm extends Component<PropsType, {}> {
                         values[attribute] = values[attribute] ? values[attribute].split(',').map((val: string) => val.trim()) : [];
                     }
                 }
-                this.props.addContactHandler(values)
+                this.props.submitHandler(values)
                     .done(() => resetForm());
             }}
+            enableReinitialize
         >
         {/* Callback function containing Formik state and helpers that handle common form actions */}
         {({ values,

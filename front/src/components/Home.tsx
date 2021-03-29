@@ -1,7 +1,7 @@
 import $ from "jquery"
 import React from "react";
 import { Component } from "react";
-import { Button, Col, ListGroup, Row, Tab } from "react-bootstrap";
+import { Button, ButtonGroup, Col, ListGroup, Row, Tab } from "react-bootstrap";
 
 import { API_ENDPOINT } from "../config";
 import { join } from "../utils";
@@ -129,6 +129,26 @@ class Home extends Component<PropsType, StateType> {
         }).fail((_, textStatus) => console.error(textStatus));
     }
 
+    private editContact(id: string|number, values: {}) {
+        function removeEmpty(obj: {}): {} {
+            return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v != null));
+        }
+        return $.ajax({
+            url: join(API_ENDPOINT, 'contact', String(id)),
+            method: 'PUT',
+            data: JSON.stringify(removeEmpty(values)),
+            contentType: 'application/json'
+        }).done((data) => {
+            let new_contacts = this.state.contacts
+                .slice()
+                .filter(contact => contact[this.state.config.primary_key] !== id);
+            new_contacts.push(data);
+            this.setState({
+                contacts: new_contacts,
+            });
+        }).fail((_, textStatus) => console.error(textStatus));
+    }
+
     renderDisplayedListTitle(contact: any, attributes: string[]) {
         let values: string[] = []
         for (let attribute of attributes)
@@ -162,6 +182,7 @@ class Home extends Component<PropsType, StateType> {
         // update the current context from the handler called in the chid component.
         // From https://stackoverflow.com/questions/38394015/how-to-pass-data-from-child-component-to-its-parent-in-reactjs#comment91623247_44467773
         this.addContact = this.addContact.bind(this);
+        this.editContact = this.editContact.bind(this);
         return <Tab.Content>
             {this.state.contacts.map(contact => {
                 return <Tab.Pane
@@ -186,13 +207,25 @@ class Home extends Component<PropsType, StateType> {
                             return <></>
                         })}
                     </dl>
-                    <Button variant="danger" size="sm" block onClick={() => this.deleteContact(contact[this.state.config.primary_key])}>
-                        Delete
-                    </Button>
+                    <ButtonGroup>
+                        <Button variant="primary" size="sm">
+                            Edit
+                        </Button>
+                        <Button variant="danger" size="sm" onClick={() => this.deleteContact(contact[this.state.config.primary_key])}>
+                            Delete
+                        </Button>
+                    </ButtonGroup>
+                    {/* $.extend(true, {}, contact) allows to pass a deep copy of
+                        contact. This way, every change made to the values won't
+                        be reflect in the original object. Usefull since we
+                        transform each lists by joining their values with a comma
+                        to show them correctly in the input, but still need
+                        the lists almost everywhere else. */}
+                    <ContactForm initial_value={$.extend(true, {}, contact)} config={this.state.config} submitHandler={((values: {}) => (this.editContact(contact[this.state.config.primary_key], values)))} ></ContactForm>
                 </Tab.Pane>
             })}
             <Tab.Pane eventKey="#form-add-contact">
-                <ContactForm initial_value={{}} config={this.state.config} addContactHandler={this.addContact} ></ContactForm>
+                <ContactForm initial_value={{}} config={this.state.config} submitHandler={this.addContact} ></ContactForm>
             </Tab.Pane>
         </Tab.Content>
     }
