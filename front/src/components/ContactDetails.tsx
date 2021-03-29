@@ -1,5 +1,5 @@
 import $ from "jquery"
-import React from "react";
+import React, { useState } from "react";
 import { Button, ButtonGroup, Tab } from "react-bootstrap";
 
 import { ATTRIBUTE_TYPE_COMPONENT_MAPPING, TextComponent } from "./TypeComponents";
@@ -21,6 +21,7 @@ type PropsType = {
 // We have to add the property children, otherwise we have an error "Property
 // 'children' does not exist on type 'IntrinsicAttributes & PropsType'"
 function ContactDetails(props: PropsType & { children?: React.ReactNode}) {
+    const [isFormDisplayed, setIsFormDisplayed] = useState(false);
 
     return <Tab.Pane
             eventKey={`#display-infos-contact-${props.contact[props.config.primary_key]}`}
@@ -45,7 +46,7 @@ function ContactDetails(props: PropsType & { children?: React.ReactNode}) {
             })}
         </dl>
         <ButtonGroup>
-            <Button variant="primary" size="sm">
+            <Button variant="primary" size="sm" onClick={() => setIsFormDisplayed(!isFormDisplayed)}>
                 Edit
             </Button>
             <Button variant="danger" size="sm" onClick={() => props.deleteContactHandler(props.contact[props.config.primary_key])}>
@@ -58,7 +59,7 @@ function ContactDetails(props: PropsType & { children?: React.ReactNode}) {
             transform each lists by joining their values with a comma
             to show them correctly in the input, but still need
             the lists almost everywhere else. */}
-        <ContactForm
+        {isFormDisplayed ? <ContactForm
             initial_value={$.extend(true, {}, props.contact)}
             config={props.config}
             submitHandler={((values: {}) => {
@@ -68,7 +69,7 @@ function ContactDetails(props: PropsType & { children?: React.ReactNode}) {
                 )
             })}
             >
-        </ContactForm>
+        </ContactForm> : <></>}
     </Tab.Pane>
 }
 
