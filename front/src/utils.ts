@@ -24,3 +24,7 @@ export function join(p: string, ...paths: string[]) {
     }
     return output
 }
+
+export function upperFirstLetter(input: string): string {
+    return input ? input.charAt(0).toUpperCase() + input.slice(1) : input;
+}
