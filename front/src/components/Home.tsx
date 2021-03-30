@@ -185,20 +185,47 @@ class Home extends Component<PropsType, StateType> {
     }
 
     private renderSideBarContactList() {
-        return <ListGroup>
-            {this.state.contacts.map(contact => {
-                return <ListGroup.Item
-                    action
-                    href={`#display-infos-contact-${contact[this.state.config.primary_key]}`}
-                    key={`list-group-item-${contact[this.state.config.primary_key]}`}
-                >
-                    {this.renderDisplayedListTitle(contact, this.state.config.main_attributes)}
+        let groupedListContacts: {[k: string]: any[]} = {};
+        if (this.state.config.sort_keys.length > 0) {
+            const key = this.state.config.sort_keys[0];
+            for (let contact of this.state.contacts) {
+                const category = String(contact[key]).substring(0, 1);
+                if (!groupedListContacts[category]) groupedListContacts[category] = []
+                groupedListContacts[category].push(contact)
+            }
+        } else {
+            groupedListContacts[""] = this.state.contacts;
+        }
+        const categories = Object.keys(groupedListContacts).sort();
+        return <>
+            <ListGroup>
+                {categories.map(category => {
+                    return <>
+                        <ListGroup.Item
+                            disabled
+                            className="py-0"
+                            style={{textAlign: "center", backgroundColor: "lightgray", color: "black"}}
+                        >
+                            {category.toUpperCase()}
+                        </ListGroup.Item>
+                        {groupedListContacts[category].map(contact => {
+                            return <ListGroup.Item
+                            action
+                            href={`#display-infos-contact-${contact[this.state.config.primary_key]}`}
+                            key={`list-group-item-${contact[this.state.config.primary_key]}`}
+                            >
+                                {this.renderDisplayedListTitle(contact, this.state.config.main_attributes)}
+                            </ListGroup.Item>
+                        })}
+                    </>
+                })}
+            </ListGroup>
+            <ListGroup className="mt-3">
+                <ListGroup.Item action href="#form-add-contact" variant="info">
+                    Add a contact
                 </ListGroup.Item>
-            })}
-            <ListGroup.Item action href="#form-add-contact">
-                Add a contact
-            </ListGroup.Item>
-        </ListGroup>
+            </ListGroup>
+        </>
     }
 
     private renderMainContactInfos() {
