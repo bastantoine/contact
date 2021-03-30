@@ -1,6 +1,7 @@
 import { Button, Col, Form, Row } from "react-bootstrap";
 import { Formik } from "formik";
 import * as Yup from "yup";
+import React from "react";
 
 import { ATTRIBUTE_TYPE_COMPONENT_MAPPING } from "./TypeComponents";
 import { upperFirstLetter } from "../utils";
@@ -182,7 +183,7 @@ function ContactForm(props: PropsType & { children?: React.ReactNode}) {
                             </Col>
                         </Form.Group>
                     }
-                    return <></>;
+                    return <React.Fragment key={`form-input-add-contact-${attribute}`}></React.Fragment>;
                 })}
                 <Form.Group as={Row}>
                     <Col sm={{ span: 10, offset: 2 }}>

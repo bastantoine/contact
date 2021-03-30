@@ -1,5 +1,5 @@
 import $ from "jquery"
-import { Component } from "react";
+import React, { Component } from "react";
 import { Col, ListGroup, Row, Tab } from "react-bootstrap";
 
 import { API_ENDPOINT } from "../config";
@@ -200,7 +200,7 @@ class Home extends Component<PropsType, StateType> {
         return <>
             <ListGroup>
                 {categories.map(category => {
-                    return <>
+                    return <React.Fragment key={category}>
                         <ListGroup.Item
                             disabled
                             className="py-0"
@@ -217,7 +217,7 @@ class Home extends Component<PropsType, StateType> {
                                 {this.renderDisplayedListTitle(contact, this.state.config.main_attributes)}
                             </ListGroup.Item>
                         })}
-                    </>
+                    </React.Fragment>
                 })}
             </ListGroup>
             <ListGroup className="mt-3">
@@ -242,6 +242,7 @@ class Home extends Component<PropsType, StateType> {
                     config={this.state.config}
                     editContactHandler={this.editContact}
                     deleteContactHandler={this.deleteContact}
+                    key={`detail-contact-${contact[this.state.config.primary_key]}`}
                 >
                 </ContactDetails>
             })}

@@ -23,12 +23,9 @@ type PropsType = {
 function ContactDetails(props: PropsType & { children?: React.ReactNode}) {
     const [isFormDisplayed, setIsFormDisplayed] = useState(false);
 
-    return <Tab.Pane
-            eventKey={`#display-infos-contact-${props.contact[props.config.primary_key]}`}
-            key={`tab-pane-${props.contact[props.config.primary_key]}`}
-    >
+    return <Tab.Pane eventKey={`#display-infos-contact-${props.contact[props.config.primary_key]}`}>
         <dl>
-            {props.config.attributes.map((attribute, index) => {
+            {props.config.attributes.map((attribute) => {
                 // Display only if the attribute is not the primary key
                 if (attribute !== props.config.primary_key) {
                     let has_display_name = props.config.raw_config[attribute].display_name
@@ -37,12 +34,12 @@ function ContactDetails(props: PropsType & { children?: React.ReactNode}) {
                     // From https://stackoverflow.com/a/57088282/
                     let attribute_type: keyof typeof ATTRIBUTE_TYPE_COMPONENT_MAPPING = props.config.raw_config[attribute].type;
                     let ComponentToUse = ATTRIBUTE_TYPE_COMPONENT_MAPPING[attribute_type] || TextComponent;
-                    return <React.Fragment key={`infos-contact-${props.contact[props.config.primary_key]}-${attribute}-${index}`}>
+                    return <React.Fragment key={`infos-contact-${props.contact[props.config.primary_key]}-${attribute}`}>
                         <dt>{has_display_name ? props.config.raw_config[attribute].display_name : upperFirstLetter(attribute)}</dt>
                         <dd><ComponentToUse value={props.contact[attribute] ? props.contact[attribute] : ''} extra_params={props.config.raw_config[attribute].additional_type_parameters}></ComponentToUse></dd>
                     </React.Fragment>
                 }
-                return <></>
+                return <React.Fragment key={`infos-contact-${props.contact[props.config.primary_key]}-${attribute}`}></React.Fragment>
             })}
         </dl>
         <ButtonGroup>
