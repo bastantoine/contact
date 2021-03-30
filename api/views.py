@@ -8,6 +8,7 @@ from flask import (
     Blueprint,
     jsonify,
     request,
+    send_from_directory,
 )
 
 # Load .env file in the env variables
@@ -77,3 +78,7 @@ def contacts_delete_put(id_contact: int):
     db.session.commit()
     db.session.refresh(contact)
     return jsonify(contact.format_infos())
+
+@api.route('/config')
+def config_get():
+    return send_from_directory('.', os.environ.get('CONFIG_FILE', 'config.json'))
