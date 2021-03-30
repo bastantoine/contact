@@ -260,7 +260,13 @@ class Home extends Component<PropsType, StateType> {
         } else {
             return <Row>
                 <Col lg={12}>
-                    <Tab.Container>
+                    {/* Setting transition to false allows to fix the warning :
+                    "findDOMNode is deprecated in StrictMode." (from
+                    https://github.com/react-bootstrap/react-bootstrap/issues/3518).
+                    Looks like also that this issue will be fixed when
+                    react-bootstrap will support Bootstrap v5
+                    (https://github.com/react-bootstrap/react-bootstrap/pull/5687) */}
+                    <Tab.Container transition={false}>
                         <Row>
                             <Col sm={4}>
                                 {this.renderSideBarContactList()}
