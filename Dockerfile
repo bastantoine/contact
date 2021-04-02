@@ -17,8 +17,10 @@ WORKDIR /usr/src/app
 RUN cp -a /tmp/node_modules .
 COPY ./front/ .
 # Make sure the front is configured with the right value
-# That's a ugly hack, but it works for now
-RUN echo "export const API_ENDPOINT = 'http://localhost:1337/api'" > src/config.ts
+# That's a ugly hack, but it works for now until we find a nicer way
+ARG hostname="http://localhost:1337"
+
+RUN echo "export const API_ENDPOINT = '${hostname}/api'" > src/config.ts
 RUN npm run build
 
 #####################
@@ -94,5 +96,4 @@ RUN ${WORKDIR}/generate-supervisord-conf.sh
 #####################
 #   Run the image   #
 #####################
-# CMD tail -f /dev/null
 CMD /usr/bin/supervisord -c /etc/supervisor.d/supervisord.ini
