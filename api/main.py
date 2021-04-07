@@ -1,5 +1,6 @@
 import os
 
+from dotenv import load_dotenv
 from flask import Flask
 from flask_cors import CORS
 
@@ -18,6 +19,11 @@ def create_app() -> Flask:
     db.init_app(app)
     with app.app_context():
         db.create_all()
+
+    load_dotenv()
+    # Make sure the config file exists when starting the app. If not create a blank file
+    if not os.path.isfile(os.environ.get('CONFIG_FILE', 'config.json')):
+        open(os.environ.get('CONFIG_FILE', 'config.json'), 'w').close()
 
     app.register_blueprint(api)
 
