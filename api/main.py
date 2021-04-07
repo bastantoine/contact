@@ -21,9 +21,10 @@ def create_app() -> Flask:
         db.create_all()
 
     load_dotenv()
-    # Make sure the config file exists when starting the app. If not create a blank file
+    # Make sure the config file exists when starting the app. If not create a new file as a valid empy JSON.
     if not os.path.isfile(os.environ.get('CONFIG_FILE', 'config.json')):
-        open(os.environ.get('CONFIG_FILE', 'config.json'), 'w').close()
+        with open(os.environ.get('CONFIG_FILE', 'config.json'), 'w') as f:
+            f.write('[]')
 
     app.register_blueprint(api)
 
