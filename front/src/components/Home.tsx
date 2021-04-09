@@ -133,7 +133,6 @@ class Home extends Component<PropsType, StateType> {
             url: join(API_ENDPOINT, 'contact', String(id)),
             method: 'DELETE'
         }).done(() => {
-            console.log(this.state);
             let filtered_contacts = this.state.contacts.filter((contact) => {
                 return contact[this.state.config.primary_key] !== id
             })
