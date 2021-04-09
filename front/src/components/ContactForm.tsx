@@ -136,30 +136,34 @@ class ContactForm extends Component<PropsType, StateType> {
                 initialValues={this.props.initial_value}
                 validationSchema={validationSchema}
                 onSubmit={(values, { setSubmitting, resetForm }) => {
-                    this.setState({submitError: null});
-                    // When button submits form and form is in the process of submitting, submit button is disabled
-                    setSubmitting(true);
-                    for (let attribute of this.props.config.attributes) {
-                        const attribute_type: string = this.props.config.raw_config[attribute].type;
-                        if (attribute_type === 'list') {
-                            // Make sure the attributes that expect a
-                            // list receive a list, even if empty
-                            values[attribute] = values[attribute] ? values[attribute].split(',').map((val: string) => val.trim()) : [];
-                        }
-                    }
-                    this.props.submitHandler(values)
-                        .fail((error) => {
-                            // Make sure the arrays are transformed back to string
-                            // value, so that the client side validation will still
-                            // work on them
-                            for (let val of Object.keys(values)) {
-                                if (Array.isArray(values[val]))
-                                    values[val] = values[val].join(', ');
+                    let firstNonEmptyValue = Object.values(values).find((v: string) => v !== '');
+                    if (firstNonEmptyValue) {
+                        // At least one value is not empty
+                        this.setState({submitError: null});
+                        // When button submits form and form is in the process of submitting, submit button is disabled
+                        setSubmitting(true);
+                        for (let attribute of this.props.config.attributes) {
+                            const attribute_type: string = this.props.config.raw_config[attribute].type;
+                            if (attribute_type === 'list') {
+                                // Make sure the attributes that expect a
+                                // list receive a list, even if empty
+                                values[attribute] = values[attribute] ? values[attribute].split(',').map((val: string) => val.trim()) : [];
                             }
-                            setSubmitting(false);
-                            this.setState({submitError: error});
-                        })
-                        .done(() => resetForm());
+                        }
+                        this.props.submitHandler(values)
+                            .fail((error) => {
+                                // Make sure the arrays are transformed back to string
+                                // value, so that the client side validation will still
+                                // work on them
+                                for (let val of Object.keys(values)) {
+                                    if (Array.isArray(values[val]))
+                                    values[val] = values[val].join(', ');
+                                }
+                                setSubmitting(false);
+                                this.setState({submitError: error});
+                            })
+                            .done(() => resetForm());
+                    }
                 }}
                 enableReinitialize
             >
