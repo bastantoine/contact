@@ -201,13 +201,13 @@ class Home extends Component<PropsType, StateType> {
             <ListGroup>
                 {categories.map(category => {
                     return <React.Fragment key={category}>
-                        <ListGroup.Item
+                        {category !== '' ? <ListGroup.Item
                             disabled
                             className="py-0"
                             style={{textAlign: "center", backgroundColor: "lightgray", color: "black"}}
                         >
                             {category.toUpperCase()}
-                        </ListGroup.Item>
+                        </ListGroup.Item> : <></>}
                         {groupedListContacts[category].map(contact => {
                             return <ListGroup.Item
                             action
