@@ -6,10 +6,19 @@ import sys
 
 
 class MissingRequiredValueException(Exception):
-    pass
+
+    def __init__(self, field: str, *args: object) -> None:
+        self.code = 'MISSING_VALUE_REQUIRED'
+        self.field = field
+        super().__init__(*args)
 
 class WrongTypeException(Exception):
-    pass
+
+    def __init__(self, field: str, expect_type: str, *args: object) -> None:
+        self.code = 'WRONG_TYPE'
+        self.field = field
+        self.expect_type = expect_type
+        super().__init__(*args)
 
 
 class Config:
@@ -56,12 +65,17 @@ class Field:
     def check(self, value: Any) -> bool:
         """
         """
-        if self.required:
-            if not value:
-                raise MissingRequiredValueException(f'Missing value for required parameter {self.name}')
-            return self.field_type.check(value, additional_params=self.additional_params)
-        if value:
-            return self.field_type.check(value, additional_params=self.additional_params)
+        try:
+            if self.required:
+                if not value:
+                    raise MissingRequiredValueException(self.name, f'Missing value for required parameter {self.name}')
+                return self.field_type.check(value, additional_params=self.additional_params)
+            if value:
+                return self.field_type.check(value, additional_params=self.additional_params)
+        except WrongTypeException as exp:
+            # Set the real field name here, because we don't have it when checking the type
+            exp.field = self.name
+            raise exp
         return True
 
 
@@ -79,7 +93,11 @@ class FieldType:
         raise NotImplementedError
 
     def _raise_wrong_type_error(self, value):
-        raise WrongTypeException(f"Wrong type for {self.__class__.__name__} with value {value} ({type(value).__name__})")
+        raise WrongTypeException(
+            '', # Field name, set it to blank here because we don't have it, will be set to the right value later
+            TYPE_FIELD_MAPPING[self.__class__],
+            f"Wrong type for {self.__class__.__name__} with value {value} ({type(value).__name__})",
+        )
 
 
 class IntegerFieldType(FieldType):
@@ -165,6 +183,7 @@ FIELD_TYPE_MAPPING: Dict[str, 'FieldType'] = {
     'url': StrFieldType(),
     'email': StrFieldType(),
 }
+TYPE_FIELD_MAPPING = {field.__class__: type_name for type_name, field in FIELD_TYPE_MAPPING.items()}
 
 
 def validate_config_file(filename: str) -> Tuple[bool, str]:
