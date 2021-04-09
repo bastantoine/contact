@@ -1,6 +1,7 @@
 from datetime import datetime
 from json import (dumps, loads)
 import os
+from typing import Union
 
 from dotenv import load_dotenv
 from flask import (
@@ -8,6 +9,7 @@ from flask import (
     Blueprint,
     jsonify,
     request,
+    Response,
     send_from_directory,
 )
 
@@ -40,7 +42,7 @@ def contacts_get_post():
     try:
         config.check(infos, fields_to_skip=['id'])
     except (MissingRequiredValueException, WrongTypeException) as exp:
-        abort(400, str(exp))
+        abort(_build_response_config_error(exp))
 
     # We're safe to use request.json, because we already checked before, when calling request.json,
     # that the body of the request was indeed a valid JSON. Internally request.json calls
@@ -71,7 +73,7 @@ def contacts_delete_put(id_contact: int):
     try:
         config.check(new_infos, fields_to_skip=['id'])
     except (MissingRequiredValueException, WrongTypeException) as exp:
-        abort(400, str(exp))
+        abort(_build_response_config_error(exp))
 
     current_infos = loads(contact.infos)
     contact.infos = dumps(dict(current_infos, **new_infos))
@@ -82,3 +84,14 @@ def contacts_delete_put(id_contact: int):
 @api.route('/config')
 def config_get():
     return send_from_directory('.', os.environ.get('CONFIG_FILE', 'config.json'))
+
+def _build_response_config_error(error: Union[MissingRequiredValueException, WrongTypeException]) -> Response:
+    body = {
+        "field": error.field,
+        "code": error.code,
+    }
+    if isinstance(error, WrongTypeException):
+        body["expected_type"] = error.expect_type
+    response = jsonify(body)
+    response.status = '400'
+    return response
