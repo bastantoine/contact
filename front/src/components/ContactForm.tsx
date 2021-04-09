@@ -57,6 +57,8 @@ function findInputTypeFromAttributeType(
             return "url";
         case "long_str":
             return "textarea";
+        case "integer":
+            return "number"
         default:
             return "text";
     }
