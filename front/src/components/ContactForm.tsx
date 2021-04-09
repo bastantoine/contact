@@ -14,7 +14,8 @@ type PropsType = {
         primary_key: string,
         raw_config: any,
     },
-    submitHandler: (values: {}) => JQueryXHR
+    submitHandler: (values: {}) => JQueryXHR,
+    submitButtonMessage: string
 }
 
 // Helper used to create a validator that will split the values of an
@@ -189,7 +190,7 @@ function ContactForm(props: PropsType & { children?: React.ReactNode}) {
                 })}
                 <Form.Group as={Row}>
                     <Col sm={{ span: 10, offset: 2 }}>
-                        <Button type="submit" disabled={isSubmitting}>Add contact</Button>
+                        <Button type="submit" disabled={isSubmitting}>{props.submitButtonMessage}</Button>
                     </Col>
                 </Form.Group>
             </Form>

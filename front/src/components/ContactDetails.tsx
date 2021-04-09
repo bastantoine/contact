@@ -65,6 +65,7 @@ function ContactDetails(props: PropsType & { children?: React.ReactNode}) {
                     values
                 )
             })}
+            submitButtonMessage={"Edit the contact"}
             >
         </ContactForm> : <></>}
     </Tab.Pane>

@@ -247,7 +247,7 @@ class Home extends Component<PropsType, StateType> {
                 </ContactDetails>
             })}
             <Tab.Pane eventKey="#form-add-contact">
-                <ContactForm initial_value={{}} config={this.state.config} submitHandler={this.addContact} ></ContactForm>
+                <ContactForm initial_value={{}} config={this.state.config} submitHandler={this.addContact} submitButtonMessage={"Add a contact"}></ContactForm>
             </Tab.Pane>
         </Tab.Content>
     }
