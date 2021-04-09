@@ -18,7 +18,7 @@ type PropsType = {
     submitButtonMessage: string
 }
 type StateType = {
-    submitError: null | JQuery.jqXHR,
+    hasErrorInSubmit: boolean,
 }
 
 class ContactForm extends Component<PropsType, StateType> {
@@ -26,7 +26,7 @@ class ContactForm extends Component<PropsType, StateType> {
     constructor(props: PropsType) {
         super(props);
         this.state = {
-            submitError: null
+            hasErrorInSubmit: false
         }
     }
 
@@ -135,11 +135,11 @@ class ContactForm extends Component<PropsType, StateType> {
             <Formik
                 initialValues={this.props.initial_value}
                 validationSchema={validationSchema}
-                onSubmit={(values, { setSubmitting, resetForm }) => {
+                onSubmit={(values, { setSubmitting, resetForm, setFieldError }) => {
                     let firstNonEmptyValue = Object.values(values).find((v: string) => v !== '');
                     if (firstNonEmptyValue) {
                         // At least one value is not empty
-                        this.setState({submitError: null});
+                        this.setState({hasErrorInSubmit: false});
                         // When button submits form and form is in the process of submitting, submit button is disabled
                         setSubmitting(true);
                         for (let attribute of this.props.config.attributes) {
@@ -160,7 +160,20 @@ class ContactForm extends Component<PropsType, StateType> {
                                     values[val] = values[val].join(', ');
                                 }
                                 setSubmitting(false);
-                                this.setState({submitError: error});
+                                this.setState({hasErrorInSubmit: true});
+                                let error_message: string;
+                                switch (error.responseJSON.code) {
+                                    case "WRONG_TYPE":
+                                        error_message = `Wrong type of value. Expected ${error.responseJSON.expected_type}`;
+                                        break;
+                                    case "MISSING_VALUE_REQUIRED":
+                                        error_message = "Missing required value";
+                                        break;
+                                    default:
+                                        error_message = '';
+                                        break;
+                                }
+                                setFieldError(error.responseJSON.field, error_message);
                             })
                             .done(() => resetForm());
                     }
@@ -227,10 +240,9 @@ class ContactForm extends Component<PropsType, StateType> {
                     </Form>
                 )}
             </Formik>
-            {this.state.submitError ?
+            {this.state.hasErrorInSubmit ?
             <Alert variant={"danger"}>
                 There has been an error while submitting the form. Please retry.<br/>
-                {this.state.submitError.responseText}
             </Alert> : <></>}
         </>
     }
