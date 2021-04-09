@@ -1,4 +1,4 @@
-import { Button, Col, Form, Row } from "react-bootstrap";
+import { Alert, Button, Col, Form, Row } from "react-bootstrap";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import React, { Component } from "react";
@@ -17,9 +17,18 @@ type PropsType = {
     submitHandler: (values: {}) => JQueryXHR,
     submitButtonMessage: string
 }
-type StateType = {}
+type StateType = {
+    submitError: null | JQuery.jqXHR,
+}
 
 class ContactForm extends Component<PropsType, StateType> {
+
+    constructor(props: PropsType) {
+        super(props);
+        this.state = {
+            submitError: null
+        }
+    }
 
     private findInputTypeFromAttributeType(
         attribute_type: keyof typeof ATTRIBUTE_TYPE_COMPONENT_MAPPING,
@@ -122,85 +131,104 @@ class ContactForm extends Component<PropsType, StateType> {
         let validationSchema = this.buildValidationSchema();
 
         // Base formik form taken from https://hackernoon.com/building-react-forms-with-formik-yup-and-react-bootstrap-with-a-minimal-amount-of-pain-and-suffering-1sfk3xv8
-        return <Formik
-            initialValues={this.props.initial_value}
-            validationSchema={validationSchema}
-            onSubmit={(values, { setSubmitting, resetForm }) => {
-                // When button submits form and form is in the process of submitting, submit button is disabled
-                setSubmitting(true);
-                for (let attribute of this.props.config.attributes) {
-                    const attribute_type: string = this.props.config.raw_config[attribute].type;
-                    if (attribute_type === 'list') {
-                        // Make sure the attributes that expect a
-                        // list receive a list, even if empty
-                        values[attribute] = values[attribute] ? values[attribute].split(',').map((val: string) => val.trim()) : [];
-                    }
-                }
-                this.props.submitHandler(values)
-                    .done(() => resetForm());
-            }}
-            enableReinitialize
-        >
-        {/* Callback function containing Formik state and helpers that handle common form actions */}
-        {({ values,
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            isSubmitting}) => (
-                // We need the noValidate so that the browser will not try to
-                // valide the inputs and won't display any error message that
-                // would mess up with the validation we already have.
-                <Form onSubmit={handleSubmit} noValidate>
-                    {this.props.config.attributes.map((attribute: string) => {
-                        if (attribute !== this.props.config.primary_key) {
-                            const config_attribute = this.props.config.raw_config[attribute];
-                            let has_display_name = config_attribute.display_name;
-                            let displayed_name = has_display_name ? config_attribute.display_name : upperFirstLetter(attribute);
-                            let input_type = this.findInputTypeFromAttributeType(
-                                config_attribute.type,
-                                (config_attribute.additional_type_parameters &&
-                                config_attribute.additional_type_parameters.inner_type
-                                ) || ''
-                            );
-                            let help_text = config_attribute.form_help_text;
-                            return <Form.Group as={Row} controlId={`form-control-${attribute}`} key={`form-input-add-contact-${attribute}`}>
-                                <Form.Label column sm={2}>
-                                    <p className="text-right">{displayed_name}</p>
-                                </Form.Label>
-                                <Col sm={10}>
-                                    {/* Setting 'undefined' as the attribute value allows to not set the attributes when the predicates evaluates to false */}
-                                    <Form.Control
-                                        as={input_type === "textarea" ? "textarea" : undefined}
-                                        rows={input_type === "textarea" ? 3 : undefined}
-                                        type={input_type}
-                                        name={attribute}
-                                        onChange={handleChange}
-                                        onBlur={handleBlur}
-                                        value={values[attribute]}
-                                        placeholder={displayed_name}
-                                        aria-describedby={help_text ? `help-text-form-add-${attribute}` : undefined}
-                                        isValid={touched[attribute] && !errors[attribute]}
-                                        isInvalid={!!errors[attribute]}
-                                    />
-                                    {/* Add helper text only if the config has one set */}
-                                    {help_text ? <Form.Text id={`help-text-form-add-${attribute}`} muted>{help_text}</Form.Text> : <></>}
-                                    {/* Add error message if needed */}
-                                    {!!errors[attribute] ? <Form.Control.Feedback type="invalid">{errors[attribute]}</Form.Control.Feedback> : <></>}
-                                </Col>
-                            </Form.Group>
+        return <>
+            <Formik
+                initialValues={this.props.initial_value}
+                validationSchema={validationSchema}
+                onSubmit={(values, { setSubmitting, resetForm }) => {
+                    this.setState({submitError: null});
+                    // When button submits form and form is in the process of submitting, submit button is disabled
+                    setSubmitting(true);
+                    for (let attribute of this.props.config.attributes) {
+                        const attribute_type: string = this.props.config.raw_config[attribute].type;
+                        if (attribute_type === 'list') {
+                            // Make sure the attributes that expect a
+                            // list receive a list, even if empty
+                            values[attribute] = values[attribute] ? values[attribute].split(',').map((val: string) => val.trim()) : [];
                         }
-                        return <React.Fragment key={`form-input-add-contact-${attribute}`}></React.Fragment>;
-                    })}
-                    <Form.Group as={Row}>
-                        <Col sm={{ span: 10, offset: 2 }}>
-                            <Button type="submit" disabled={isSubmitting}>{this.props.submitButtonMessage}</Button>
-                        </Col>
-                    </Form.Group>
-                </Form>
-            )}
-        </Formik>
+                    }
+                    this.props.submitHandler(values)
+                        .fail((error) => {
+                            // Make sure the arrays are transformed back to string
+                            // value, so that the client side validation will still
+                            // work on them
+                            for (let val of Object.keys(values)) {
+                                if (Array.isArray(values[val]))
+                                    values[val] = values[val].join(', ');
+                            }
+                            setSubmitting(false);
+                            this.setState({submitError: error});
+                        })
+                        .done(() => resetForm());
+                }}
+                enableReinitialize
+            >
+            {/* Callback function containing Formik state and helpers that handle common form actions */}
+            {({ values,
+                errors,
+                touched,
+                handleChange,
+                handleBlur,
+                handleSubmit,
+                isSubmitting}) => (
+                    // We need the noValidate so that the browser will not try to
+                    // valide the inputs and won't display any error message that
+                    // would mess up with the validation we already have.
+                    <Form onSubmit={handleSubmit} noValidate>
+                        {this.props.config.attributes.map((attribute: string) => {
+                            if (attribute !== this.props.config.primary_key) {
+                                const config_attribute = this.props.config.raw_config[attribute];
+                                let has_display_name = config_attribute.display_name;
+                                let displayed_name = has_display_name ? config_attribute.display_name : upperFirstLetter(attribute);
+                                let input_type = this.findInputTypeFromAttributeType(
+                                    config_attribute.type,
+                                    (config_attribute.additional_type_parameters &&
+                                    config_attribute.additional_type_parameters.inner_type
+                                    ) || ''
+                                );
+                                let help_text = config_attribute.form_help_text;
+                                return <Form.Group as={Row} controlId={`form-control-${attribute}`} key={`form-input-add-contact-${attribute}`}>
+                                    <Form.Label column sm={2}>
+                                        <p className="text-right">{displayed_name}</p>
+                                    </Form.Label>
+                                    <Col sm={10}>
+                                        {/* Setting 'undefined' as the attribute value allows to not set the attributes when the predicates evaluates to false */}
+                                        <Form.Control
+                                            as={input_type === "textarea" ? "textarea" : undefined}
+                                            rows={input_type === "textarea" ? 3 : undefined}
+                                            type={input_type}
+                                            name={attribute}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            value={values[attribute]}
+                                            placeholder={displayed_name}
+                                            aria-describedby={help_text ? `help-text-form-add-${attribute}` : undefined}
+                                            isValid={touched[attribute] && !errors[attribute]}
+                                            isInvalid={!!errors[attribute]}
+                                        />
+                                        {/* Add helper text only if the config has one set */}
+                                        {help_text ? <Form.Text id={`help-text-form-add-${attribute}`} muted>{help_text}</Form.Text> : <></>}
+                                        {/* Add error message if needed */}
+                                        {!!errors[attribute] ? <Form.Control.Feedback type="invalid">{errors[attribute]}</Form.Control.Feedback> : <></>}
+                                    </Col>
+                                </Form.Group>
+                            }
+                            return <React.Fragment key={`form-input-add-contact-${attribute}`}></React.Fragment>;
+                        })}
+                        <Form.Group as={Row}>
+                            <Col sm={{ span: 10, offset: 2 }}>
+                                <Button type="submit" disabled={isSubmitting}>{this.props.submitButtonMessage}</Button>
+                            </Col>
+                        </Form.Group>
+                    </Form>
+                )}
+            </Formik>
+            {this.state.submitError ?
+            <Alert variant={"danger"}>
+                There has been an error while submitting the form. Please retry.<br/>
+                {this.state.submitError.responseText}
+            </Alert> : <></>}
+        </>
     }
 }
 
