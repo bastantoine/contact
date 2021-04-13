@@ -6,7 +6,24 @@ import { API_ENDPOINT } from "../config";
 import { join } from "../utils";
 import ContactForm from "./ContactForm";
 import ContactDetails from "./ContactDetails";
+import { ALLOWED_TYPES } from "./TypeComponents";
 
+
+export type ConfigType = {
+    [k: string]: {
+        type: ALLOWED_TYPES,
+        required?: boolean,
+        primary_key?: boolean,
+        display_name?: string,
+        main_attribute?: number,
+        sort_key?: number,
+        additional_type_parameters?: {
+            inner_type?: string,
+            accepted_types?: string[],
+        },
+        form_help_text?: string,
+    }
+}
 type PropsType = {}
 type StateType = {
     isLoaded: boolean,
@@ -18,7 +35,7 @@ type StateType = {
         sort_keys: string[],
         attributes: string[],
         primary_key: string,
-        raw_config: any,
+        raw_config: ConfigType,
     },
 }
 

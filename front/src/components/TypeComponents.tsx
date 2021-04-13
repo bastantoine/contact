@@ -65,3 +65,4 @@ const _ATTRIBUTE_TYPE_COMPONENT_MAPPING = {
 // after init. From https://stackoverflow.com/a/44441178/
 export const ATTRIBUTE_TYPE_COMPONENT_MAPPING: {[k: string]: any} = Object.assign({}, _ATTRIBUTE_TYPE_COMPONENT_MAPPING)
 ATTRIBUTE_TYPE_COMPONENT_MAPPING.list =  ListComponent
+export type ALLOWED_TYPES = keyof typeof ATTRIBUTE_TYPE_COMPONENT_MAPPING

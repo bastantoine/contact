@@ -3,7 +3,7 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 import React, { Component } from "react";
 
-import { ATTRIBUTE_TYPE_COMPONENT_MAPPING } from "./TypeComponents";
+import { ALLOWED_TYPES } from "./TypeComponents";
 import { upperFirstLetter } from "../utils";
 
 type PropsType = {
@@ -31,10 +31,10 @@ class ContactForm extends Component<PropsType, StateType> {
     }
 
     private findInputTypeFromAttributeType(
-        attribute_type: keyof typeof ATTRIBUTE_TYPE_COMPONENT_MAPPING,
+        attribute_type: ALLOWED_TYPES,
         // inner_type is used only when attribute_type is a list,
         // in this case it is the type of the values inside the list
-        inner_type?: keyof typeof ATTRIBUTE_TYPE_COMPONENT_MAPPING
+        inner_type?: ALLOWED_TYPES
     ): string {
         switch (attribute_type) {
             case "image":
