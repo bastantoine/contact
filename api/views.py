@@ -36,24 +36,13 @@ def contacts_get_post():
     if not request.json:
         abort(400, 'Missing data')
 
-    infos = request.json
-
-    config = Config(os.environ.get('CONFIG_FILE', 'config.json'))
-    try:
-        config.check(infos, fields_to_skip=['id'])
-    except (MissingRequiredValueException, WrongTypeException) as exp:
-        abort(_build_response_config_error(exp))
-
     # We're safe to use request.json, because we already checked before, when calling request.json,
     # that the body of the request was indeed a valid JSON. Internally request.json calls
     # request.get_json() which does more than simply loading the request body as JSON. It also
     # checks that the Content-Type header is set to application/json and that the request body is a
     # valid JSON. This way we are sure the data we insert in the DB is a valid JSON.
-    new_contact = Contact(infos=dumps(infos), inserted_timestamp=datetime.now())
-    db.session.add(new_contact)
-    db.session.commit()
 
-    db.session.refresh(new_contact)
+    new_contact = create_or_update_contact_instance_or_abort(None, request.json)
     return jsonify(new_contact.format_infos())
 
 @api.route('/contact/<int:id_contact>', methods=['DELETE', 'PUT'])
@@ -68,22 +57,30 @@ def contacts_delete_put(id_contact: int):
     if not request.json:
         abort(400, 'Missing data')
 
-    new_infos = request.json
+    contact = create_or_update_contact_instance_or_abort(contact, request.json)
+    return jsonify(contact.format_infos())
+
+@api.route('/config')
+def config_get():
+    return send_from_directory('.', os.environ.get('CONFIG_FILE', 'config.json'))
+
+def create_or_update_contact_instance_or_abort(instance: Contact, new_infos: dict) -> Contact:
     config = Config(os.environ.get('CONFIG_FILE', 'config.json'))
     try:
         config.check(new_infos, fields_to_skip=['id'])
     except (MissingRequiredValueException, WrongTypeException) as exp:
         abort(_build_response_config_error(exp))
 
-    current_infos = loads(contact.infos)
-    contact.infos = dumps(dict(current_infos, **new_infos))
+    # In case the initial instance is None, this means we want to create a new instance
+    is_add = bool(instance is None)
+    instance = instance or Contact(infos= '{}', inserted_timestamp=datetime.now())
+    current_infos = loads(instance.infos)
+    instance.infos = dumps(dict(current_infos, **new_infos))
+    if is_add:
+        db.session.add(instance)
     db.session.commit()
-    db.session.refresh(contact)
-    return jsonify(contact.format_infos())
-
-@api.route('/config')
-def config_get():
-    return send_from_directory('.', os.environ.get('CONFIG_FILE', 'config.json'))
+    db.session.refresh(instance)
+    return instance
 
 def _build_response_config_error(error: Union[MissingRequiredValueException, WrongTypeException]) -> Response:
     body = {
