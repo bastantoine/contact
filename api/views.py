@@ -41,7 +41,6 @@ def contacts_get_post():
     # request.get_json() which does more than simply loading the request body as JSON. It also
     # checks that the Content-Type header is set to application/json and that the request body is a
     # valid JSON. This way we are sure the data we insert in the DB is a valid JSON.
-
     new_contact = create_or_update_contact_instance_or_abort(None, request.json)
     return jsonify(new_contact.format_infos())
 
@@ -63,6 +62,10 @@ def contacts_delete_put(id_contact: int):
 @api.route('/config')
 def config_get():
     return send_from_directory('.', os.environ.get('CONFIG_FILE', 'config.json'))
+
+@api.route('/<filename>')
+def filename_get(filename: str):
+    return send_from_directory(os.environ.get('UPLOAD_FOLDER', 'uploads'), filename)
 
 def create_or_update_contact_instance_or_abort(instance: Contact, new_infos: dict) -> Contact:
     config = Config(os.environ.get('CONFIG_FILE', 'config.json'))
