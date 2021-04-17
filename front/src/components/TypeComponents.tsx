@@ -66,3 +66,6 @@ const _ATTRIBUTE_TYPE_COMPONENT_MAPPING = {
 export const ATTRIBUTE_TYPE_COMPONENT_MAPPING: {[k: string]: any} = Object.assign({}, _ATTRIBUTE_TYPE_COMPONENT_MAPPING)
 ATTRIBUTE_TYPE_COMPONENT_MAPPING.list =  ListComponent
 export type ALLOWED_TYPES = keyof typeof ATTRIBUTE_TYPE_COMPONENT_MAPPING
+export const FILE_FIELDS = [
+    'image',
+]

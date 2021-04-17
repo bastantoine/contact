@@ -14,6 +14,7 @@ type PropsType = {
         primary_key: string,
         raw_config: any,
     },
+    fileInputChangeHandler: (attribute: string, file: File) => void,
     submitHandler: (values: {}) => JQueryXHR,
     submitButtonMessage: string
 }
@@ -215,9 +216,9 @@ class ContactForm extends Component<PropsType, StateType> {
                                             rows={input_type === "textarea" ? 3 : undefined}
                                             type={input_type}
                                             name={attribute}
-                                            onChange={handleChange}
+                                            onChange={input_type !== 'file' ? handleChange : (event: React.FormEvent<any>) => {this.props.fileInputChangeHandler(attribute, event.currentTarget.files[0]); handleChange(event)}}
                                             onBlur={handleBlur}
-                                            value={values[attribute]}
+                                            value={input_type !== 'file' ? values[attribute] : undefined}
                                             placeholder={displayed_name}
                                             aria-describedby={help_text ? `help-text-form-add-${attribute}` : undefined}
                                             isValid={touched[attribute] && !errors[attribute]}

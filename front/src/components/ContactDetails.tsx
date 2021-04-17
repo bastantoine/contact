@@ -15,6 +15,7 @@ type PropsType = {
         primary_key: string,
         raw_config: ConfigType,
     },
+    fileInputChangeHandler: (attribute: string, file: File) => void,
     editContactHandler: (id: string|number, values: {}) => JQueryXHR,
     deleteContactHandler: (id: string|number) => void
 }
@@ -57,6 +58,7 @@ function ContactDetails(props: PropsType & { children?: React.ReactNode}) {
         {isFormDisplayed ? <ContactForm
             initial_value={$.extend(true, {}, props.contact)}
             config={props.config}
+            fileInputChangeHandler={props.fileInputChangeHandler}
             submitHandler={((values: {}) => {
                 return props.editContactHandler(
                     props.contact[props.config.primary_key],

@@ -6,7 +6,7 @@ import { API_ENDPOINT } from "../config";
 import { join } from "../utils";
 import ContactForm from "./ContactForm";
 import ContactDetails from "./ContactDetails";
-import { ALLOWED_TYPES } from "./TypeComponents";
+import { ALLOWED_TYPES, FILE_FIELDS } from "./TypeComponents";
 
 
 export type ConfigType = {
@@ -30,6 +30,7 @@ type StateType = {
     isConfigLoaded: boolean,
     error: null | JQuery.jqXHR,
     contacts: any[],
+    files: {[k: string]: File},
     config: {
         main_attributes: string[],
         sort_keys: string[],
@@ -48,6 +49,7 @@ class Home extends Component<PropsType, StateType> {
             isConfigLoaded: false,
             error: null,
             contacts: [],
+            files: {},
             config: {
                 main_attributes: [],
                 sort_keys: [],
@@ -145,6 +147,48 @@ class Home extends Component<PropsType, StateType> {
         $.when(this.loadConfig(), this.loadContacts()).done(() => this.sortContacts());
     }
 
+    private prepare_file_fields(values: {[k: string]: any}) {
+        let file_fields = this.state.config.attributes.filter((attr) => FILE_FIELDS.includes(String(this.state.config.raw_config[attr].type)));
+        for (let field of file_fields) {
+            if (this.state.files[field] !== undefined) {
+                // For each file passed in the form, store only the filename,
+                // the upload of the file itself is done after
+                values[field] = this.state.files[field].name;
+            }
+        }
+        return values
+    }
+
+    private addUploadedFile(attribute: string, file: File) {
+        let alreadyUploadedFiles = this.state.files;
+        alreadyUploadedFiles[attribute] = file;
+        this.setState({files: alreadyUploadedFiles})
+    }
+
+    private uploadFilesToContact(id: string|number, method: 'POST'|'PUT') {
+        let files = new FormData();
+        for (let [field, file] of Object.entries(this.state.files)){
+            files.append(field, file);
+        }
+        $.ajax({
+            url: join(API_ENDPOINT, 'contact', String(id), 'files'),
+            method: method,
+            processData: false,
+            contentType: false,
+            data: files,
+        }).done((data) => {
+            let new_contacts = this.state.contacts
+                .slice()
+                .filter(contact => contact[this.state.config.primary_key] !== id);
+            new_contacts.push(data);
+            this.setState({
+                contacts: new_contacts,
+                files: {},
+            });
+            this.sortContacts();
+        }).fail((_, textStatus) => console.error(textStatus));
+    }
+
     private deleteContact(id: string|number) {
         $.ajax({
             url: join(API_ENDPOINT, 'contact', String(id)),
@@ -157,39 +201,49 @@ class Home extends Component<PropsType, StateType> {
         })
     }
 
-    private addContact(values: {}) {
+    private addContact(values: {[k: string]: any}) {
+        values = this.prepare_file_fields(values);
         return $.post({
             url: join(API_ENDPOINT, 'contact'),
             data: JSON.stringify(values),
             contentType: 'application/json',
         }).done((data) => {
-            let new_contacts = this.state.contacts.slice();
-            new_contacts.push(data);
-            this.setState({
-                contacts: new_contacts,
-            });
-            this.sortContacts();
+            if (Object.keys(this.state.files).length > 0) {
+                this.uploadFilesToContact(data[this.state.config.primary_key], 'POST')
+            } else {
+                let new_contacts = this.state.contacts.slice();
+                new_contacts.push(data);
+                this.setState({
+                    contacts: new_contacts,
+                });
+                this.sortContacts();
+            }
         }).fail((_, textStatus) => console.error(textStatus));
     }
 
-    private editContact(id: string|number, values: {}) {
+    private editContact(id: string|number, values: {[k: string]: any}) {
         function removeEmpty(obj: {}): {} {
             return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v != null));
         }
+        values = this.prepare_file_fields(values);
         return $.ajax({
             url: join(API_ENDPOINT, 'contact', String(id)),
             method: 'PUT',
             data: JSON.stringify(removeEmpty(values)),
             contentType: 'application/json'
         }).done((data) => {
-            let new_contacts = this.state.contacts
-                .slice()
-                .filter(contact => contact[this.state.config.primary_key] !== id);
-            new_contacts.push(data);
-            this.setState({
-                contacts: new_contacts,
-            });
-            this.sortContacts();
+            if (Object.keys(this.state.files).length > 0) {
+                this.uploadFilesToContact(data[this.state.config.primary_key], 'PUT')
+            } else {
+                let new_contacts = this.state.contacts
+                    .slice()
+                    .filter(contact => contact[this.state.config.primary_key] !== id);
+                new_contacts.push(data);
+                this.setState({
+                    contacts: new_contacts,
+                });
+                this.sortContacts();
+            }
         }).fail((_, textStatus) => console.error(textStatus));
     }
 
@@ -251,11 +305,13 @@ class Home extends Component<PropsType, StateType> {
         this.addContact = this.addContact.bind(this);
         this.editContact = this.editContact.bind(this);
         this.deleteContact = this.deleteContact.bind(this);
+        this.addUploadedFile = this.addUploadedFile.bind(this);
         return <Tab.Content>
             {this.state.contacts.map(contact => {
                 return <ContactDetails
                     contact={contact}
                     config={this.state.config}
+                    fileInputChangeHandler={this.addUploadedFile}
                     editContactHandler={this.editContact}
                     deleteContactHandler={this.deleteContact}
                     key={`detail-contact-${contact[this.state.config.primary_key]}`}
@@ -263,7 +319,13 @@ class Home extends Component<PropsType, StateType> {
                 </ContactDetails>
             })}
             <Tab.Pane eventKey="#form-add-contact">
-                <ContactForm initial_value={{}} config={this.state.config} submitHandler={this.addContact} submitButtonMessage={"Add a contact"}></ContactForm>
+                <ContactForm
+                    initial_value={{}}
+                    config={this.state.config}
+                    fileInputChangeHandler={this.addUploadedFile}
+                    submitHandler={this.addContact}
+                    submitButtonMessage={"Add a contact"}
+                ></ContactForm>
             </Tab.Pane>
         </Tab.Content>
     }
