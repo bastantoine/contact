@@ -183,10 +183,10 @@ class Home extends Component<PropsType, StateType> {
             new_contacts.push(data);
             this.setState({
                 contacts: new_contacts,
-                files: {},
             });
             this.sortContacts();
-        }).fail((_, textStatus) => console.error(textStatus));
+        }).fail((_, textStatus) => console.error(textStatus))
+          .always(() => this.setState({files: {}}));
     }
 
     private deleteContact(id: string|number) {
