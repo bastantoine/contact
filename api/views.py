@@ -12,6 +12,7 @@ from flask import (
     Response,
     send_from_directory,
 )
+from werkzeug.utils import secure_filename
 
 # Load .env file in the env variables
 load_dotenv()
@@ -20,6 +21,7 @@ api = Blueprint('api', __name__, url_prefix="")
 
 from config import (
     Config,
+    FILE_FIELDS,
     MissingRequiredValueException,
     WrongTypeException,
 )
@@ -57,6 +59,31 @@ def contacts_delete_put(id_contact: int):
         abort(400, 'Missing data')
 
     contact = create_or_update_contact_instance_or_abort(contact, request.json)
+    return jsonify(contact.format_infos())
+
+@api.route('/contact/<int:id_contact>/files', methods=['POST', 'PUT'])
+def contacts_file_post_put(id_contact: int):
+    contact = Contact.query.get_or_404(id_contact)
+
+    if not request.files:
+        abort(400)
+
+    config = Config(os.environ.get('CONFIG_FILE', 'config.json'))
+    file_fields = [field for field in config.fields if field.field_type in FILE_FIELDS]
+
+    new_infos = {}
+    for field in file_fields:
+        if field.required and not request.files.get(field.name):
+            abort(_build_response_config_error(MissingRequiredValueException(field.name)))
+        if request.files.get(field.name):
+            file = request.files.get(field.name)
+            if not file.filename:
+                abort(400, f'Missing filename for field {field.name}')
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(os.environ.get('UPLOAD_FOLDER'), filename))
+            new_infos[field.name] = filename
+
+    contact = create_or_update_contact_instance_or_abort(contact, new_infos)
     return jsonify(contact.format_infos())
 
 @api.route('/config')

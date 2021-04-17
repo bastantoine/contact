@@ -184,6 +184,9 @@ FIELD_TYPE_MAPPING: Dict[str, 'FieldType'] = {
     'email': StrFieldType(),
 }
 TYPE_FIELD_MAPPING = {field.__class__: type_name for type_name, field in FIELD_TYPE_MAPPING.items()}
+FILE_FIELDS = [
+    FIELD_TYPE_MAPPING['image'],
+]
 
 
 def validate_config_file(filename: str) -> Tuple[bool, str]:
