@@ -68,6 +68,9 @@ def filename_get(filename: str):
     return send_from_directory(os.environ.get('UPLOAD_FOLDER', 'uploads'), filename)
 
 def create_or_update_contact_instance_or_abort(instance: Contact, new_infos: dict) -> Contact:
+    if not new_infos:
+        return instance
+
     config = Config(os.environ.get('CONFIG_FILE', 'config.json'))
     try:
         config.check(new_infos, fields_to_skip=['id'])
