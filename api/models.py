@@ -33,5 +33,5 @@ def clean_files_on_delete(_mapper: Mapper, _connection: Connection, target: Cont
     file_fields = [field.name for field in config.fields if field.field_type in FILE_FIELDS]
     infos = loads(target.infos)
     for field in file_fields:
-        if infos.get(field):
+        if infos.get(field) and os.path.exists(os.path.join(os.environ.get('UPLOAD_FOLDER', 'uploads'), infos[field])):
             os.remove(os.path.join(os.environ.get('UPLOAD_FOLDER', 'uploads'), infos[field]))
