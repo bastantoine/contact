@@ -33,7 +33,7 @@ from models import (
 @api.route('/contact', methods=['GET', 'POST'])
 def contacts_get_post():
     if request.method == 'GET':
-        return jsonify([contact.format_infos() for contact in Contact.query.all()])
+        return jsonify([add_full_url_to_file_fields(contact.format_infos(), request.url_root) for contact in Contact.query.all()])
 
     if not request.json:
         abort(400, 'Missing data')
@@ -44,7 +44,7 @@ def contacts_get_post():
     # checks that the Content-Type header is set to application/json and that the request body is a
     # valid JSON. This way we are sure the data we insert in the DB is a valid JSON.
     new_contact = create_or_update_contact_instance_or_abort(None, request.json)
-    return jsonify(new_contact.format_infos())
+    return jsonify(add_full_url_to_file_fields(new_contact.format_infos(), request.url_root))
 
 @api.route('/contact/<int:id_contact>', methods=['DELETE', 'PUT'])
 def contacts_delete_put(id_contact: int):
@@ -59,7 +59,7 @@ def contacts_delete_put(id_contact: int):
         abort(400, 'Missing data')
 
     contact = create_or_update_contact_instance_or_abort(contact, request.json)
-    return jsonify(contact.format_infos())
+    return jsonify(add_full_url_to_file_fields(contact.format_infos(), request.url_root))
 
 @api.route('/contact/<int:id_contact>/files', methods=['POST', 'PUT'])
 def contacts_file_post_put(id_contact: int):
@@ -84,7 +84,7 @@ def contacts_file_post_put(id_contact: int):
             new_infos[field.name] = filename
 
     contact = create_or_update_contact_instance_or_abort(contact, new_infos)
-    return jsonify(contact.format_infos())
+    return jsonify(add_full_url_to_file_fields(contact.format_infos(), request.url_root))
 
 @api.route('/config')
 def config_get():
@@ -114,6 +114,14 @@ def create_or_update_contact_instance_or_abort(instance: Contact, new_infos: dic
     db.session.commit()
     db.session.refresh(instance)
     return instance
+
+def add_full_url_to_file_fields(infos: dict, base_url: str) -> dict:
+    config = Config(os.environ.get('CONFIG_FILE', 'config.json'))
+    file_fields = [field.name for field in config.fields if field.field_type in FILE_FIELDS]
+    for field in file_fields:
+        if infos.get(field):
+            infos[field] = os.path.join(base_url, infos[field])
+    return infos
 
 def _build_response_config_error(error: Union[MissingRequiredValueException, WrongTypeException]) -> Response:
     body = {
