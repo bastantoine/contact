@@ -26,6 +26,10 @@ def create_app() -> Flask:
         with open(os.environ.get('CONFIG_FILE', 'config.json'), 'w') as f:
             f.write('[]')
 
+    # Make sure upload folder exists
+    if not os.path.exists(os.environ.get('UPLOAD_FOLDER', 'uploads')):
+        os.mkdir(os.environ.get('UPLOAD_FOLDER', 'uploads'))
+
     app.register_blueprint(api)
 
     return app

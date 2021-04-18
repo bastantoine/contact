@@ -3,7 +3,7 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 import React, { Component } from "react";
 
-import { ATTRIBUTE_TYPE_COMPONENT_MAPPING } from "./TypeComponents";
+import { ALLOWED_TYPES } from "./TypeComponents";
 import { upperFirstLetter } from "../utils";
 
 type PropsType = {
@@ -14,6 +14,7 @@ type PropsType = {
         primary_key: string,
         raw_config: any,
     },
+    fileInputChangeHandler: (attribute: string, file: File) => void,
     submitHandler: (values: {}) => JQueryXHR,
     submitButtonMessage: string
 }
@@ -31,10 +32,10 @@ class ContactForm extends Component<PropsType, StateType> {
     }
 
     private findInputTypeFromAttributeType(
-        attribute_type: keyof typeof ATTRIBUTE_TYPE_COMPONENT_MAPPING,
+        attribute_type: ALLOWED_TYPES,
         // inner_type is used only when attribute_type is a list,
         // in this case it is the type of the values inside the list
-        inner_type?: keyof typeof ATTRIBUTE_TYPE_COMPONENT_MAPPING
+        inner_type?: ALLOWED_TYPES
     ): string {
         switch (attribute_type) {
             case "image":
@@ -215,9 +216,9 @@ class ContactForm extends Component<PropsType, StateType> {
                                             rows={input_type === "textarea" ? 3 : undefined}
                                             type={input_type}
                                             name={attribute}
-                                            onChange={handleChange}
+                                            onChange={input_type !== 'file' ? handleChange : (event: React.FormEvent<any>) => {this.props.fileInputChangeHandler(attribute, event.currentTarget.files[0]); handleChange(event)}}
                                             onBlur={handleBlur}
-                                            value={values[attribute]}
+                                            value={input_type !== 'file' ? values[attribute] : undefined}
                                             placeholder={displayed_name}
                                             aria-describedby={help_text ? `help-text-form-add-${attribute}` : undefined}
                                             isValid={touched[attribute] && !errors[attribute]}
