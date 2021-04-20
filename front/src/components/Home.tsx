@@ -6,7 +6,7 @@ import { API_ENDPOINT } from "../config";
 import { join } from "../utils";
 import ContactForm from "./ContactForm";
 import ContactDetails from "./ContactDetails";
-import Configuration from "./Configuration";
+import Configuration from "./configuration/Configuration";
 import { ALLOWED_TYPES, FILE_FIELDS } from "./TypeComponents";
 
 
