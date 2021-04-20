@@ -10,20 +10,21 @@ import Configuration from "./configuration/Configuration";
 import { ALLOWED_TYPES, FILE_FIELDS } from "./TypeComponents";
 
 
+export type FieldConfigType = {
+    type: ALLOWED_TYPES,
+    required?: boolean,
+    primary_key?: boolean,
+    display_name?: string,
+    main_attribute?: number,
+    sort_key?: number,
+    additional_type_parameters?: {
+        inner_type?: string,
+        accepted_types?: string[],
+    },
+    form_help_text?: string,
+}
 export type ConfigType = {
-    [k: string]: {
-        type: ALLOWED_TYPES,
-        required?: boolean,
-        primary_key?: boolean,
-        display_name?: string,
-        main_attribute?: number,
-        sort_key?: number,
-        additional_type_parameters?: {
-            inner_type?: string,
-            accepted_types?: string[],
-        },
-        form_help_text?: string,
-    }
+    [k: string]: FieldConfigType
 }
 type PropsType = {}
 type StateType = {

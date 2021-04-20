@@ -30,8 +30,12 @@ function Configuration(props: PropsType & { children?: React.ReactNode}) {
                 // valide the inputs and won't display any error message that
                 // would mess up with the validation we already have.
                 <Form onSubmit={handleSubmit} noValidate>
-                    {props.config.attributes.map((attr) => {
-                        return <ConfigurationField key={attr}></ConfigurationField>
+                    {Object.entries(props.config.raw_config).map(([fieldName, fieldConfig]) => {
+                        return <ConfigurationField
+                            key={fieldName}
+                            fieldName={fieldName}
+                            fieldConfig={fieldConfig}
+                        ></ConfigurationField>
                     })}
                 </Form>
             )}
