@@ -294,6 +294,9 @@ class Home extends Component<PropsType, StateType> {
                 <ListGroup.Item action href="#form-add-contact" variant="info">
                     Add a contact
                 </ListGroup.Item>
+                <ListGroup.Item action href="#configuration" variant="secondary">
+                    Configuration
+                </ListGroup.Item>
             </ListGroup>
         </>
     }
