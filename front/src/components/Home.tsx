@@ -6,6 +6,7 @@ import { API_ENDPOINT } from "../config";
 import { join } from "../utils";
 import ContactForm from "./ContactForm";
 import ContactDetails from "./ContactDetails";
+import Configuration from "./Configuration";
 import { ALLOWED_TYPES, FILE_FIELDS } from "./TypeComponents";
 
 
@@ -329,6 +330,9 @@ class Home extends Component<PropsType, StateType> {
                     submitHandler={this.addContact}
                     submitButtonMessage={"Add a contact"}
                 ></ContactForm>
+            </Tab.Pane>
+            <Tab.Pane eventKey="#configuration">
+                <Configuration config={this.state.config}></Configuration>
             </Tab.Pane>
         </Tab.Content>
     }
