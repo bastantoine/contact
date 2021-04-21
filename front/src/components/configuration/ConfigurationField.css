@@ -6,3 +6,27 @@ div.field-configuration-form {
     padding-right: 16px;
     margin-bottom: 16px;
 }
+
+.field-configuration-name-title {
+    padding-bottom: 16px;
+}
+
+.field-configuration-name-title-value {
+    display: flex;
+    flex-direction: row;
+}
+
+.field-configuration-name-title-value:before,
+.field-configuration-name-title-value:after {
+    content: "";
+    flex: 1 1;
+    border-bottom: 1px solid lightgray;
+    margin: auto;
+}
+.field-configuration-name-title-value:before {
+    margin-right: 10px
+}
+
+.field-configuration-name-title-value:after {
+    margin-left: 10px
+}

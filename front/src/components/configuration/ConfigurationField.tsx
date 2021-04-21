@@ -19,13 +19,14 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
     const [open, setOpen] = useState(false);
     return <>
         <div className="field-configuration-form">
-            <p
+            <div
                 onClick={() => setOpen(!open)}
                 aria-controls={`config-form-field-${props.fieldName}`}
                 aria-expanded={open}
+                className="field-configuration-name-title"
             >
-                {props.fieldName}
-            </p>
+                <span className="field-configuration-name-title-value">{props.fieldName}</span>
+            </div>
             <Collapse in={open}>
                 <div id={`config-form-field-${props.fieldName}`}>
                 <Form.Group as={Row}>
