@@ -25,7 +25,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                 aria-expanded={open}
                 className="field-configuration-name-title"
             >
-                <span className="field-configuration-name-title-value">{props.fieldName}</span>
+                <span className="field-configuration-name-title-value">{props.fieldConfig.display_name ? props.fieldConfig.display_name : props.fieldName}</span>
             </div>
             <Collapse in={open}>
                 <div id={`config-form-field-${props.fieldName}`}>
