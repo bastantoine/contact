@@ -1,0 +1,8 @@
+div.field-configuration-form {
+    border: 1px solid lightgray;
+    border-radius: 10px;
+    padding-top: 16px;
+    padding-left: 16px;
+    padding-right: 16px;
+    margin-bottom: 16px;
+}

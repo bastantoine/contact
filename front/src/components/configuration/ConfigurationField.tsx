@@ -1,21 +1,12 @@
 import React, { useState } from "react";
 import { Button, ButtonGroup, Col, Collapse, Form, Row } from "react-bootstrap";
 import { FieldConfigType } from "../Home";
-
 import { ATTRIBUTE_TYPE_COMPONENT_MAPPING } from "../TypeComponents";
+import './ConfigurationField.css'
 
 type PropsType = {
     fieldName: string,
     fieldConfig: FieldConfigType,
-}
-
-const fieldDivStyle = {
-    border: '1px solid lightgray',
-    borderRadius: '10px',
-    paddingTop: '16px',
-    paddingLeft: '16px',
-    paddingRight: '16px',
-    marginBottom: '16px',
 }
 
 // We have to add the property children, otherwise we have an error "Property
@@ -27,7 +18,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
     const [isButtonSortKeyDisplated, setIsButtonSortKeyDisplated] = useState(props.fieldConfig.sort_key !== undefined);
     const [open, setOpen] = useState(false);
     return <>
-        <div style={fieldDivStyle}>
+        <div className="field-configuration-form">
             <p
                 onClick={() => setOpen(!open)}
                 aria-controls={`config-form-field-${props.fieldName}`}
