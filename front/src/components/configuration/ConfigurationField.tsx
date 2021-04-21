@@ -22,6 +22,10 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                  ((props.fieldName !== '') && props.fieldName) ||
                  ''
                 );
+    const [titleHook, setTitleHook] = useState(title);
+    const setTitleHookOrDefault = (new_val: string) => {new_val !== '' ? setTitleHook(new_val) : setTitleHook(fieldNameHook || titleHook)};
+    // Hook that stores the current value of the field name. Used to properly set the title of the change
+    const [fieldNameHook, setFieldNameHook] = useState(props.fieldName);
 
     return <>
         <div className="field-configuration-form">
@@ -31,7 +35,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                 aria-expanded={open}
                 className="field-configuration-name-title"
             >
-                <span className="field-configuration-name-title-value">{title !== '' ? title : <i>&lt; New field &gt;</i>}</span>
+                <span className="field-configuration-name-title-value">{titleHook !== '' ? titleHook : <i>&lt; New field &gt;</i>}</span>
             </div>
             <Collapse in={open}>
                 <div id={`config-form-field-${props.fieldName}`}>
@@ -40,7 +44,14 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                         Name
                     </Form.Label>
                     <Col xl={9}>
-                        <Form.Control type="text" placeholder="Name" defaultValue={props.fieldName} required />
+                        <Form.Control
+                            type="text"
+                            placeholder="Name"
+                            defaultValue={props.fieldName}
+                            onChange={(event) => setFieldNameHook(event.target.value)}
+                            onBlur={(event: {target: {value: string}}) => setTitleHookOrDefault(event.target.value)}
+                            required
+                        />
                     </Col>
                 </Form.Group>
                 <Form.Group as={Row}>
@@ -107,7 +118,12 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                         Display name
                     </Form.Label>
                     <Col xl={9}>
-                        <Form.Control type="text" placeholder="Display name" defaultValue={props.fieldConfig.display_name} />
+                        <Form.Control
+                            type="text"
+                            placeholder="Display name"
+                            defaultValue={props.fieldConfig.display_name}
+                            onBlur={(event: {target: {value: string}}) => setTitleHookOrDefault(event.target.value)}
+                        />
                     </Col>
                 </Form.Group> : <></>}
                 {isButtonFormHelpTextDisplayed ? <Form.Group as={Row}>
