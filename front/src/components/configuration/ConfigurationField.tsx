@@ -17,6 +17,12 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
     const [isButtonMainAttributeDisplayed, setIsButtonMainAttributeDisplayed] = useState(props.fieldConfig.main_attribute !== undefined);
     const [isButtonSortKeyDisplated, setIsButtonSortKeyDisplated] = useState(props.fieldConfig.sort_key !== undefined);
     const [open, setOpen] = useState(false);
+
+    let title = ((props.fieldConfig.display_name && props.fieldConfig.display_name) ||
+                 ((props.fieldName !== '') && props.fieldName) ||
+                 ''
+                );
+
     return <>
         <div className="field-configuration-form">
             <div
@@ -25,7 +31,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                 aria-expanded={open}
                 className="field-configuration-name-title"
             >
-                <span className="field-configuration-name-title-value">{props.fieldConfig.display_name ? props.fieldConfig.display_name : props.fieldName}</span>
+                <span className="field-configuration-name-title-value">{title !== '' ? title : <i>&lt; New field &gt;</i>}</span>
             </div>
             <Collapse in={open}>
                 <div id={`config-form-field-${props.fieldName}`}>
