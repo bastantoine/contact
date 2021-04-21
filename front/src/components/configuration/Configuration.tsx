@@ -1,8 +1,8 @@
-import React from "react";
-import { Form } from "react-bootstrap";
+import { Component } from "react";
+import { Button, Form } from "react-bootstrap";
 import { Formik } from "formik";
 
-import { ConfigType } from "../Home";
+import { ConfigType, FieldConfigType } from "../Home";
 import ConfigurationField from "./ConfigurationField";
 
 type PropsType = {
@@ -13,11 +13,26 @@ type PropsType = {
         raw_config: ConfigType,
     },
 }
+type StateType = {
+    form_config: {[k: string]: {name: string, config: FieldConfigType}}
+}
 
-// We have to add the property children, otherwise we have an error "Property
-// 'children' does not exist on type 'IntrinsicAttributes & PropsType'"
-function Configuration(props: PropsType & { children?: React.ReactNode}) {
-    return <>
+class Configuration extends Component<PropsType, StateType> {
+
+    constructor(props: PropsType) {
+        super(props)
+        // Reformat a bit the config object: the key is used as the key of the child
+        // Component, this way when we add a new field, we set its key to a random
+        // string, and a blank name, so that a blank name is displayed, but each
+        // child component still has a unique key.
+        let form_config: {[k: string]: {name: string, config: FieldConfigType}} = {};
+        for (let [fieldName, fieldConfig] of Object.entries(this.props.config.raw_config))
+            form_config[fieldName] = {name: fieldName, config: fieldConfig};
+        this.state = {form_config: form_config};
+    }
+
+    render() {
+        return <>
             <Formik
                 initialValues={{}}
                 onSubmit={(values) => {
@@ -30,17 +45,24 @@ function Configuration(props: PropsType & { children?: React.ReactNode}) {
                 // valide the inputs and won't display any error message that
                 // would mess up with the validation we already have.
                 <Form onSubmit={handleSubmit} noValidate>
-                    {Object.entries(props.config.raw_config).map(([fieldName, fieldConfig]) => {
+                    {Object.entries(this.state.form_config).map(([fieldKey, {name, config}]) => {
                         return <ConfigurationField
-                            key={fieldName}
-                            fieldName={fieldName}
-                            fieldConfig={fieldConfig}
+                            key={fieldKey}
+                            fieldName={name}
+                            fieldConfig={config}
                         ></ConfigurationField>
                     })}
                 </Form>
             )}
             </Formik>
+            <Button onClick={() => {
+                let form_config = this.state.form_config;
+                form_config[Math.random().toString(36).substring(7)] = {name: '', config: {type: ''}};
+                this.setState({form_config: form_config});
+            }}>Add new field</Button>
         </>
+    }
+
 }
 
 export default Configuration
