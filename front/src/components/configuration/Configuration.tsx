@@ -1,5 +1,5 @@
 import { Component } from "react";
-import { Button, Form } from "react-bootstrap";
+import { Button, ButtonGroup, Form } from "react-bootstrap";
 import { Formik } from "formik";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
@@ -93,17 +93,20 @@ class Configuration extends Component<PropsType, StateType> {
                             )}
                         </Droppable>
                     </DragDropContext>
+                    <ButtonGroup>
+                        <Button onClick={() => {
+                            let form_config = this.state.form_config;
+                            let fields = this.state.fields;
+                            let new_field_key = Math.random().toString(36).substring(7);
+                            fields.push(new_field_key);
+                            form_config[new_field_key] = {name: '', config: {type: ''}};
+                            this.setState({form_config: form_config, fields: fields});
+                        }}>Add new field</Button>
+                        <Button type="submit" variant="success">Save configuration</Button>
+                    </ButtonGroup>
                 </Form>
             )}
             </Formik>
-            <Button onClick={() => {
-                let form_config = this.state.form_config;
-                let fields = this.state.fields;
-                let new_field_key = Math.random().toString(36).substring(7);
-                fields.push(new_field_key);
-                form_config[new_field_key] = {name: '', config: {type: ''}};
-                this.setState({form_config: form_config, fields: fields});
-            }}>Add new field</Button>
         </>
     }
 
