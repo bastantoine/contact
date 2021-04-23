@@ -5,6 +5,7 @@ import { ATTRIBUTE_TYPE_COMPONENT_MAPPING } from "../TypeComponents";
 import './ConfigurationField.css'
 
 type PropsType = {
+    fieldKey: string,
     fieldName: string,
     fieldConfig: FieldConfigType,
 }
@@ -50,6 +51,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                             defaultValue={props.fieldName}
                             onChange={(event) => setFieldNameHook(event.target.value)}
                             onBlur={(event: {target: {value: string}}) => setTitleHookOrDefault(event.target.value)}
+                            name={`${props.fieldKey}-name`}
                             required
                         />
                     </Col>
@@ -59,7 +61,12 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                         Type
                     </Form.Label>
                     <Col xl={9}>
-                        <Form.Control as="select" defaultValue={Object.keys(ATTRIBUTE_TYPE_COMPONENT_MAPPING).includes(String(props.fieldConfig.type)) ? props.fieldConfig.type : "Choose type..."} required>
+                        <Form.Control
+                            as="select"
+                            defaultValue={Object.keys(ATTRIBUTE_TYPE_COMPONENT_MAPPING).includes(String(props.fieldConfig.type)) ? props.fieldConfig.type : "Choose type..."}
+                            name={`${props.fieldKey}-type`}
+                            required
+                        >
                             <option>Choose type...</option>
                             {Object.keys(ATTRIBUTE_TYPE_COMPONENT_MAPPING).map((type) => <option key={type}>{type}</option>)}
                         </Form.Control>
@@ -69,12 +76,18 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                     <Form.Label column xl={3}></Form.Label>
                     <Col xl={9}>
                         <Form.Row>
-                            <Form.Check type="checkbox" label="Required" defaultChecked={props.fieldConfig.required === true ? true : undefined} />
+                            <Form.Check
+                                type="checkbox"
+                                label="Required"
+                                defaultChecked={props.fieldConfig.required === true ? true : undefined}
+                                name={`${props.fieldKey}-required`}
+                            />
                             <Form.Check
                                 type="checkbox"
                                 label="Primary key"
-                                defaultChecked={props.fieldConfig.required === true ? true : undefined}
+                                defaultChecked={props.fieldConfig.primary_key === true ? true : undefined}
                                 style={{marginLeft: '10px'}}
+                                name={`${props.fieldKey}-primary_key`}
                             />
                         </Form.Row>
                     </Col>
@@ -123,6 +136,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                             placeholder="Display name"
                             defaultValue={props.fieldConfig.display_name}
                             onBlur={(event: {target: {value: string}}) => setTitleHookOrDefault(event.target.value)}
+                            name={`${props.fieldKey}-display_name`}
                         />
                     </Col>
                 </Form.Group> : <></>}
@@ -131,7 +145,12 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                         Form help text
                     </Form.Label>
                     <Col xl={9}>
-                        <Form.Control type="text" placeholder="Form help text" defaultValue={props.fieldConfig.form_help_text} />
+                        <Form.Control
+                            type="text"
+                            placeholder="Form help text"
+                            defaultValue={props.fieldConfig.form_help_text}
+                            name={`${props.fieldKey}-form_help_text`}
+                        />
                     </Col>
                 </Form.Group> : <></>}
                 {isButtonMainAttributeDisplayed ? <Form.Group as={Row}>
@@ -139,7 +158,12 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                         Main attribute value
                     </Form.Label>
                     <Col xl={9}>
-                        <Form.Control type="text" placeholder="Main attribute value" defaultValue={props.fieldConfig.main_attribute} />
+                        <Form.Control
+                            type="text"
+                            placeholder="Main attribute value"
+                            defaultValue={props.fieldConfig.main_attribute}
+                            name={`${props.fieldKey}-main_attribute`}
+                        />
                     </Col>
                 </Form.Group> : <></>}
                 {isButtonSortKeyDisplated ? <Form.Group as={Row}>
@@ -147,7 +171,12 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                         Sort key value
                     </Form.Label>
                     <Col xl={9}>
-                        <Form.Control type="text" placeholder="Sort key value" defaultValue={props.fieldConfig.sort_key} />
+                        <Form.Control
+                            type="text"
+                            placeholder="Sort key value"
+                            defaultValue={props.fieldConfig.sort_key}
+                            name={`${props.fieldKey}-sort_key`}
+                        />
                     </Col>
                 </Form.Group> : <></>}
                 </div>

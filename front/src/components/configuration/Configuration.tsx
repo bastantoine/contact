@@ -81,6 +81,7 @@ class Configuration extends Component<PropsType, StateType> {
                                                     ref={provided.innerRef}
                                                 >
                                                     <ConfigurationField
+                                                        fieldKey={fieldKey}
                                                         fieldName={name}
                                                         fieldConfig={config}
                                                     ></ConfigurationField>
