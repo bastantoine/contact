@@ -8,6 +8,14 @@ type PropsType = {
     fieldKey: string,
     fieldName: string,
     fieldConfig: FieldConfigType,
+    onChange: {
+        (e: React.ChangeEvent<any>): void;
+        <T = string | React.ChangeEvent<any>>(field: T): T extends React.ChangeEvent<any> ? void : (e: string | React.ChangeEvent<any>) => void;
+    },
+    onBlur: {
+        (e: React.FocusEvent<any>): void;
+        <T = any>(fieldOrEvent: T): T extends string ? (e: any) => void : void;
+    },
 }
 
 // We have to add the property children, otherwise we have an error "Property
@@ -49,8 +57,8 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                             type="text"
                             placeholder="Name"
                             defaultValue={props.fieldName}
-                            onChange={(event) => setFieldNameHook(event.target.value)}
-                            onBlur={(event: {target: {value: string}}) => setTitleHookOrDefault(event.target.value)}
+                            onChange={(event) => {setFieldNameHook(event.target.value); props.onChange(event)}}
+                            onBlur={(event: {target: {value: string}}) => {setTitleHookOrDefault(event.target.value); props.onBlur(event)}}
                             name={`${props.fieldKey}-name`}
                             required
                         />
@@ -64,6 +72,8 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                         <Form.Control
                             as="select"
                             defaultValue={Object.keys(ATTRIBUTE_TYPE_COMPONENT_MAPPING).includes(String(props.fieldConfig.type)) ? props.fieldConfig.type : "Choose type..."}
+                            onChange={props.onChange}
+                            onBlur={props.onBlur}
                             name={`${props.fieldKey}-type`}
                             required
                         >
@@ -80,6 +90,8 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                                 type="checkbox"
                                 label="Required"
                                 defaultChecked={props.fieldConfig.required === true ? true : undefined}
+                                onChange={props.onChange}
+                                onBlur={props.onBlur}
                                 name={`${props.fieldKey}-required`}
                             />
                             <Form.Check
@@ -87,6 +99,8 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                                 label="Primary key"
                                 defaultChecked={props.fieldConfig.primary_key === true ? true : undefined}
                                 style={{marginLeft: '10px'}}
+                                onChange={props.onChange}
+                                onBlur={props.onBlur}
                                 name={`${props.fieldKey}-primary_key`}
                             />
                         </Form.Row>
@@ -135,7 +149,8 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                             type="text"
                             placeholder="Display name"
                             defaultValue={props.fieldConfig.display_name}
-                            onBlur={(event: {target: {value: string}}) => setTitleHookOrDefault(event.target.value)}
+                            onBlur={(event: {target: {value: string}}) => {setTitleHookOrDefault(event.target.value); props.onBlur(event)}}
+                            onChange={props.onChange}
                             name={`${props.fieldKey}-display_name`}
                         />
                     </Col>
@@ -149,6 +164,8 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                             type="text"
                             placeholder="Form help text"
                             defaultValue={props.fieldConfig.form_help_text}
+                            onChange={props.onChange}
+                            onBlur={props.onBlur}
                             name={`${props.fieldKey}-form_help_text`}
                         />
                     </Col>
@@ -162,6 +179,8 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                             type="text"
                             placeholder="Main attribute value"
                             defaultValue={props.fieldConfig.main_attribute}
+                            onChange={props.onChange}
+                            onBlur={props.onBlur}
                             name={`${props.fieldKey}-main_attribute`}
                         />
                     </Col>
@@ -175,6 +194,8 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                             type="text"
                             placeholder="Sort key value"
                             defaultValue={props.fieldConfig.sort_key}
+                            onChange={props.onChange}
+                            onBlur={props.onBlur}
                             name={`${props.fieldKey}-sort_key`}
                         />
                     </Col>

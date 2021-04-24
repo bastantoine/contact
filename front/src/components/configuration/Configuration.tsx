@@ -39,13 +39,16 @@ class Configuration extends Component<PropsType, StateType> {
     render() {
         return <>
             <Formik
-                initialValues={{}}
+                initialValues={this.state.form_config}
                 onSubmit={(values) => {
                     console.log(values);
                 }}
             >
             {/* Callback function containing Formik state and helpers that handle common form actions */}
-            {({ handleSubmit}) => (
+            {({ handleSubmit,
+                handleChange,
+                handleBlur,
+                values}) => (
                 // We need the noValidate so that the browser will not try to
                 // valide the inputs and won't display any error message that
                 // would mess up with the validation we already have.
@@ -72,7 +75,7 @@ class Configuration extends Component<PropsType, StateType> {
                             {(provided) => (
                                 <div {...provided.droppableProps} ref={provided.innerRef}>
                                     {this.state.fields.map((fieldKey, index) => {
-                                        const {name, config} = this.state.form_config[fieldKey];
+                                        const {name, config} = values[fieldKey];
                                         return <Draggable key={fieldKey} draggableId={fieldKey} index={index}>
                                             {(provided) => (
                                                 <div
@@ -81,6 +84,8 @@ class Configuration extends Component<PropsType, StateType> {
                                                     ref={provided.innerRef}
                                                 >
                                                     <ConfigurationField
+                                                        onChange={handleChange}
+                                                        onBlur={handleBlur}
                                                         fieldKey={fieldKey}
                                                         fieldName={name}
                                                         fieldConfig={config}
