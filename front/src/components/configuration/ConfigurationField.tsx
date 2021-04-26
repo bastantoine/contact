@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button, ButtonGroup, Col, Collapse, Form, Row } from "react-bootstrap";
-import { ATTRIBUTE_TYPE_COMPONENT_MAPPING } from "../TypeComponents";
+import { ATTRIBUTE_TYPE_COMPONENT_MAPPING, LIST_ALLOWED_INNER_TYPES } from "../TypeComponents";
 import './ConfigurationField.css'
 
 type PropsType = {
@@ -35,6 +35,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
     const setTitleHookOrDefault = (new_val: string) => {new_val !== '' ? setTitleHook(new_val) : setTitleHook(fieldNameHook || titleHook)};
     // Hook that stores the current value of the field name. Used to properly set the title of the change
     const [fieldNameHook, setFieldNameHook] = useState(props.fieldName);
+    const [typeHook, setTypeHook] = useState(props.fieldConfig.type)
 
     return <>
         <div className="field-configuration-form">
@@ -72,7 +73,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                         <Form.Control
                             as="select"
                             defaultValue={Object.keys(ATTRIBUTE_TYPE_COMPONENT_MAPPING).includes(String(props.fieldConfig.type)) ? props.fieldConfig.type : "Choose type..."}
-                            onChange={props.onChange}
+                            onChange={(event) => {setTypeHook(event.target.value); props.onChange(event)}}
                             onBlur={props.onBlur}
                             name={`${props.fieldKey}-type`}
                             required
@@ -106,6 +107,49 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                         </Form.Row>
                     </Col>
                 </Form.Group>
+                {typeHook === 'list' ? <Form.Group as={Row}>
+                    <Form.Label column xl={3}>
+                        Inner type
+                    </Form.Label>
+                    <Col xl={9}>
+                        <Form.Control
+                            as="select"
+                            defaultValue={props.fieldConfig.additional_type_parameters ? (
+                                            LIST_ALLOWED_INNER_TYPES.includes(String(props.fieldConfig.additional_type_parameters.inner_type)) ?
+                                            props.fieldConfig.additional_type_parameters.inner_type :
+                                            "Choose type..."
+                                          ) : undefined
+                                        }
+                            onChange={props.onChange}
+                            onBlur={props.onBlur}
+                            name={`${props.fieldKey}-inner_type`}
+                            required
+                        >
+                            <option>Choose type...</option>
+                            {LIST_ALLOWED_INNER_TYPES.map((type) => <option key={type}>{type}</option>)}
+                        </Form.Control>
+                    </Col>
+                </Form.Group> : <></>}
+                {typeHook === 'image' ? <Form.Group as={Row}>
+                    <Form.Label column xl={3}>
+                        Accepted types
+                    </Form.Label>
+                    <Col xl={9}>
+                        <Form.Control
+                            type="text"
+                            placeholder="Accepted types"
+                            defaultValue={props.fieldConfig.additional_type_parameters ?
+                                          props.fieldConfig.additional_type_parameters.accepted_types :
+                                          undefined
+                                        }
+                            onChange={props.onChange}
+                            onBlur={props.onBlur}
+                            name={`${props.fieldKey}-accepted_types`}
+                            required
+                        />
+                        <Form.Text muted>Enter the format of images that should be accepted, by separating them with a comma. Ex: 'png, jpg, jpeg'</Form.Text>
+                    </Col>
+                </Form.Group> : <></>}
                 <Row>
                     <Col xl={12} style={{marginBottom: '16px'}}>
                         <ButtonGroup aria-label="Basic example" className="d-flex">

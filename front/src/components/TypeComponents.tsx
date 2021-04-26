@@ -69,3 +69,9 @@ export type ALLOWED_TYPES = keyof typeof ATTRIBUTE_TYPE_COMPONENT_MAPPING
 export const FILE_FIELDS = [
     'image',
 ]
+export const LIST_ALLOWED_INNER_TYPES = [
+    'integer',
+    'str',
+    'url',
+    'email',
+]

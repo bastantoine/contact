@@ -72,6 +72,14 @@ class Configuration extends Component<PropsType, StateType> {
                             if (param === 'required' || param === 'primary_key')
                                 fieldValues[param] = fieldValues[param] !== []
                         }
+                        if (fieldValues.type === 'list' && fieldValues.inner_type) {
+                            fieldValues.additional_type_parameters = {inner_type: fieldValues.inner_type};
+                            delete fieldValues.inner_type;
+                        }
+                        if (fieldValues.type === 'image' && fieldValues.accepted_types) {
+                            fieldValues.additional_type_parameters = {accepted_types: fieldValues.accepted_types.split(',').map(((v: string) => v.trim()))};
+                            delete fieldValues.accepted_types;
+                        }
                         formattedConfig[fieldName] = fieldValues;
                     }
                     $.ajax({
