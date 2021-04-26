@@ -52,8 +52,19 @@ class Configuration extends Component<PropsType, StateType> {
             <Formik
                 initialValues={this.state.form_config}
                 onSubmit={(values) => {
-                    console.log(values);
+                    let formattedConfig: {[k: string]: {[k: string]: any}} = {};
+                    for (let fieldKey of this.state.fields) {
+                        let fieldValues = Object.fromEntries(
+                            Object.entries(values)
+                            .filter(([k, _]) => k.startsWith(fieldKey))
+                            .map(([k, v]) => [k.replace(`${fieldKey}-`, ''), v])
+                        )
+                        let fieldName = fieldValues.name || fieldKey;
+                        if (fieldValues.name) delete fieldValues.name;
+                        formattedConfig[fieldName] = fieldValues;
+                    }
                 }}
+                enableReinitialize
             >
             {/* Callback function containing Formik state and helpers that handle common form actions */}
             {({ handleSubmit,
