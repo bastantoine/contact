@@ -16,6 +16,7 @@ type PropsType = {
         primary_key: string,
         raw_config: ConfigType,
     },
+    configUpdatedHandler: ((config: {[k: string]: any}) => void)
 }
 type StateType = {
     form_config: {[k: string]: any},
@@ -76,7 +77,7 @@ class Configuration extends Component<PropsType, StateType> {
                         contentType: 'application/json'
                     })
                         .fail((error) => this.setState({error: error}))
-                        .done(() => resetForm())
+                        .done(() => {this.props.configUpdatedHandler(formattedConfig); resetForm();})
                         .always(() => setSubmitting(false));
                 }}
                 enableReinitialize
