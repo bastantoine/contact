@@ -197,10 +197,11 @@ def validate_config_file(filename: str) -> Tuple[bool, str]:
     # File must be a valid JSON file
     try:
         with open(filename) as f:
-            config = loads(f.read())
+            return validate_config(loads(f.read()))
     except JSONDecodeError:
         return (False, 'File is not a valid JSON')
 
+def validate_config(config: dict) -> Tuple[bool, str]:
     # Config mustn't have two identical keys
     keys = list(config.keys())
     for key in keys:

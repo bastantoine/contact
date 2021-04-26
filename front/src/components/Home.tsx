@@ -6,23 +6,25 @@ import { API_ENDPOINT } from "../config";
 import { join } from "../utils";
 import ContactForm from "./ContactForm";
 import ContactDetails from "./ContactDetails";
+import Configuration from "./configuration/Configuration";
 import { ALLOWED_TYPES, FILE_FIELDS } from "./TypeComponents";
 
 
+export type FieldConfigType = {
+    type: ALLOWED_TYPES,
+    required?: boolean,
+    primary_key?: boolean,
+    display_name?: string,
+    main_attribute?: number,
+    sort_key?: number,
+    additional_type_parameters?: {
+        inner_type?: string,
+        accepted_types?: string[],
+    },
+    form_help_text?: string,
+}
 export type ConfigType = {
-    [k: string]: {
-        type: ALLOWED_TYPES,
-        required?: boolean,
-        primary_key?: boolean,
-        display_name?: string,
-        main_attribute?: number,
-        sort_key?: number,
-        additional_type_parameters?: {
-            inner_type?: string,
-            accepted_types?: string[],
-        },
-        form_help_text?: string,
-    }
+    [k: string]: FieldConfigType
 }
 type PropsType = {}
 type StateType = {
@@ -62,54 +64,56 @@ class Home extends Component<PropsType, StateType> {
 
     loadConfig() {
         return $.get(join(API_ENDPOINT, 'config'))
-            .done((config) => {
-                let attributes: string[] = [];
-                let main_attributes: [number, string][] = [];
-                let sort_keys: [number, string][] = [];
-                let primary_key = '';
-                for (let key in config) {
-                    attributes.push(key);
-                    if (config[key].main_attribute !== undefined) {
-                        // This key is marked as a main attribute, which means
-                        // we'll use it on the list display. It's value is the
-                        // place it's supposed to have in the display, lower
-                        // first, higher last.
-                        main_attributes.push([config[key].main_attribute, key])
-                    }
-                    if (config[key].sort_key !== undefined) {
-                        // This key is marked as a sorting key, which means
-                        // we'll use it on the to sort the list of contacts.
-                        // It's value is the place it's supposed to have in the
-                        // sorting process, lower first, higher last.
-                        sort_keys.push([config[key].sort_key, key])
-                    }
-                    if (config[key].primary_key !== undefined && config[key].primary_key === true) {
-                        // This is key is marked as the primary key, which means
-                        // we can use it to uniquely identify a contact and use
-                        // to perfom PUT and DELETE on the API.
-                        primary_key = key;
-                    }
-                }
-                this.setState({
-                    config: {
-                        // Sort the main attributes by their value, to respect
-                        // the order the user wanted, and then get only the key
-                        main_attributes: main_attributes.sort((a, b) => a[0] - b[0]).map((item) => item[1]),
-                        // Same thing for the sorting keys
-                        sort_keys: sort_keys.sort((a, b) => a[0] - b[0]).map((item) => item[1]),
-                        attributes: attributes,
-                        primary_key: primary_key,
-                        raw_config: config,
-                    },
-                    isConfigLoaded: true
-                });
-            })
+            .done((config) => this.loadConfigFromJson(config))
             .fail((error) => {
                 this.setState({
                     error: error,
                     isConfigLoaded: false
                 });
             })
+    }
+
+    loadConfigFromJson(config: {[k: string]: any}) {
+        let attributes: string[] = [];
+        let main_attributes: [number, string][] = [];
+        let sort_keys: [number, string][] = [];
+        let primary_key = '';
+        for (let key in config) {
+            attributes.push(key);
+            if (config[key].main_attribute !== undefined) {
+                // This key is marked as a main attribute, which means
+                // we'll use it on the list display. It's value is the
+                // place it's supposed to have in the display, lower
+                // first, higher last.
+                main_attributes.push([config[key].main_attribute, key])
+            }
+            if (config[key].sort_key !== undefined) {
+                // This key is marked as a sorting key, which means
+                // we'll use it on the to sort the list of contacts.
+                // It's value is the place it's supposed to have in the
+                // sorting process, lower first, higher last.
+                sort_keys.push([config[key].sort_key, key])
+            }
+            if (config[key].primary_key !== undefined && config[key].primary_key === true) {
+                // This is key is marked as the primary key, which means
+                // we can use it to uniquely identify a contact and use
+                // to perfom PUT and DELETE on the API.
+                primary_key = key;
+            }
+        }
+        this.setState({
+            config: {
+                // Sort the main attributes by their value, to respect
+                // the order the user wanted, and then get only the key
+                main_attributes: main_attributes.sort((a, b) => a[0] - b[0]).map((item) => item[1]),
+                // Same thing for the sorting keys
+                sort_keys: sort_keys.sort((a, b) => a[0] - b[0]).map((item) => item[1]),
+                attributes: attributes,
+                primary_key: primary_key,
+                raw_config: config,
+            },
+            isConfigLoaded: true
+        });
     }
 
     loadContacts() {
@@ -294,6 +298,9 @@ class Home extends Component<PropsType, StateType> {
                 <ListGroup.Item action href="#form-add-contact" variant="info">
                     Add a contact
                 </ListGroup.Item>
+                <ListGroup.Item action href="#configuration" variant="secondary">
+                    Configuration
+                </ListGroup.Item>
             </ListGroup>
         </>
     }
@@ -306,6 +313,8 @@ class Home extends Component<PropsType, StateType> {
         this.editContact = this.editContact.bind(this);
         this.deleteContact = this.deleteContact.bind(this);
         this.addUploadedFile = this.addUploadedFile.bind(this);
+        this.loadConfigFromJson = this.loadConfigFromJson.bind(this);
+        this.sortContacts = this.sortContacts.bind(this);
         return <Tab.Content>
             {this.state.contacts.map(contact => {
                 return <ContactDetails
@@ -326,6 +335,12 @@ class Home extends Component<PropsType, StateType> {
                     submitHandler={this.addContact}
                     submitButtonMessage={"Add a contact"}
                 ></ContactForm>
+            </Tab.Pane>
+            <Tab.Pane eventKey="#configuration">
+                <Configuration
+                config={this.state.config}
+                configUpdatedHandler={(config) => {$.when(this.loadConfigFromJson(config)).done(() => this.sortContacts())}}
+            ></Configuration>
             </Tab.Pane>
         </Tab.Content>
     }

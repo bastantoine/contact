@@ -1,0 +1,36 @@
+div.field-configuration-form {
+    border: 1px solid lightgray;
+    border-radius: 10px;
+    padding-top: 16px;
+    padding-left: 16px;
+    padding-right: 16px;
+    margin-bottom: 16px;
+}
+
+div.field-configuration-form > * {
+    margin-bottom: 1rem;
+}
+
+.field-configuration-name-title-value {
+    display: flex;
+    flex-direction: row;
+}
+
+.field-configuration-name-title-value:before,
+.field-configuration-name-title-value:after {
+    content: "";
+    flex: 1 1;
+    border-bottom: 1px solid lightgray;
+    margin: auto;
+}
+.field-configuration-name-title-value:before {
+    margin-right: 10px
+}
+
+.field-configuration-name-title-value:after {
+    margin-left: 10px
+}
+
+.button-delete-field {
+    width: 100%;
+}
