@@ -1,8 +1,11 @@
+import $ from 'jquery'
 import { Component } from "react";
-import { Button, ButtonGroup, Form } from "react-bootstrap";
+import { Alert, Button, ButtonGroup, Form } from "react-bootstrap";
 import { Formik } from "formik";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
+import { API_ENDPOINT } from "../../config";
+import { join } from "../../utils";
 import { ConfigType } from "../Home";
 import ConfigurationField from "./ConfigurationField";
 
@@ -18,6 +21,7 @@ type StateType = {
     form_config: {[k: string]: any},
     fields_keys_to_names: {[k: string]: string},
     fields: string[],
+    error: null | JQuery.jqXHR,
 }
 
 class Configuration extends Component<PropsType, StateType> {
@@ -35,6 +39,7 @@ class Configuration extends Component<PropsType, StateType> {
                 form_config[`${fieldName}-${param}`] = value;
         }
         this.state = {
+            error: null,
             form_config: form_config,
             // Mapping of the field keys and field names. The field key is used
             // only internally by react, while the field name is the name used
@@ -51,7 +56,8 @@ class Configuration extends Component<PropsType, StateType> {
         return <>
             <Formik
                 initialValues={this.state.form_config}
-                onSubmit={(values) => {
+                onSubmit={(values, {setSubmitting, resetForm}) => {
+                    setSubmitting(true);
                     let formattedConfig: {[k: string]: {[k: string]: any}} = {};
                     for (let fieldKey of this.state.fields) {
                         let fieldValues = Object.fromEntries(
@@ -63,6 +69,15 @@ class Configuration extends Component<PropsType, StateType> {
                         if (fieldValues.name) delete fieldValues.name;
                         formattedConfig[fieldName] = fieldValues;
                     }
+                    $.ajax({
+                        url: join(API_ENDPOINT, 'config'),
+                        method: 'PUT',
+                        data: JSON.stringify(formattedConfig),
+                        contentType: 'application/json'
+                    })
+                        .fail((error) => this.setState({error: error}))
+                        .done(() => resetForm())
+                        .always(() => setSubmitting(false));
                 }}
                 enableReinitialize
             >
@@ -70,7 +85,8 @@ class Configuration extends Component<PropsType, StateType> {
             {({ handleSubmit,
                 handleChange,
                 handleBlur,
-                values}) => (
+                values,
+                isSubmitting}) => (
                 // We need the noValidate so that the browser will not try to
                 // valide the inputs and won't display any error message that
                 // would mess up with the validation we already have.
@@ -142,11 +158,15 @@ class Configuration extends Component<PropsType, StateType> {
                             fields_keys_to_names[new_field_key] = '';
                             this.setState({fields: fields, fields_keys_to_names: fields_keys_to_names});
                         }}>Add new field</Button>
-                        <Button type="submit" variant="success">Save configuration</Button>
+                        <Button type="submit" variant="success" disabled={isSubmitting}>Save configuration</Button>
                     </ButtonGroup>
                 </Form>
             )}
             </Formik>
+            {this.state.error ?
+            <Alert variant={"danger"} style={{marginTop: '16px'}}>
+                There has been an error while submitting the form. Please retry.<br/>
+            </Alert> : <></>}
         </>
     }
 
