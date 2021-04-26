@@ -23,6 +23,7 @@ from config import (
     Config,
     FILE_FIELDS,
     MissingRequiredValueException,
+    validate_config,
     WrongTypeException,
 )
 from models import (
@@ -86,9 +87,23 @@ def contacts_file_post_put(id_contact: int):
     contact = create_or_update_contact_instance_or_abort(contact, new_infos)
     return jsonify(add_full_url_to_file_fields(contact.format_infos(), request.url_root))
 
-@api.route('/config')
+@api.route('/config', methods=['GET', 'PUT'])
 def config_get():
-    return send_from_directory('.', os.environ.get('CONFIG_FILE', 'config.json'))
+    if request.method == 'GET':
+        return send_from_directory('.', os.environ.get('CONFIG_FILE', 'config.json'))
+
+    if not request.json:
+        abort(400, 'Missing data')
+
+    status, message = validate_config(request.json)
+
+    if not status:
+        abort (400, message)
+
+    with open(os.environ.get('CONFIG_FILE', 'config.json'), 'w') as file:
+        file.write(dumps(request.json, indent=4))
+
+    return Response(status=200)
 
 @api.route('/<filename>')
 def filename_get(filename: str):
