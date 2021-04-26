@@ -110,6 +110,7 @@ class Configuration extends Component<PropsType, StateType> {
                                                         fieldKey={fieldKey}
                                                         fieldName={fieldName}
                                                         fieldConfig={config}
+                                                        deleteFieldHandler={(fieldKey: string) => this.setState({fields: this.state.fields.filter((k) => k !== fieldKey)})}
                                                     ></ConfigurationField>
                                                 </div>
                                             )}

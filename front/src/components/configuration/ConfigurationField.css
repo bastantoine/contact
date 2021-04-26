@@ -7,8 +7,8 @@ div.field-configuration-form {
     margin-bottom: 16px;
 }
 
-.field-configuration-name-title {
-    padding-bottom: 16px;
+div.field-configuration-form > * {
+    margin-bottom: 1rem;
 }
 
 .field-configuration-name-title-value {
@@ -29,4 +29,8 @@ div.field-configuration-form {
 
 .field-configuration-name-title-value:after {
     margin-left: 10px
+}
+
+.button-delete-field {
+    width: 100%;
 }

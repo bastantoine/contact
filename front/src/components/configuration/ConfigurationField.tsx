@@ -15,6 +15,7 @@ type PropsType = {
         (e: React.FocusEvent<any>): void;
         <T = any>(fieldOrEvent: T): T extends string ? (e: any) => void : void;
     },
+    deleteFieldHandler: ((fieldKey: string) => void),
 }
 
 // We have to add the property children, otherwise we have an error "Property
@@ -199,6 +200,17 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                         />
                     </Col>
                 </Form.Group> : <></>}
+                <Row>
+                    <Col xl={{offset: 9, span: 3}}>
+                        <Button
+                            variant="danger"
+                            className="button-delete-field"
+                            onClick={() => props.deleteFieldHandler(props.fieldKey)}
+                        >
+                            Delete the field
+                        </Button>
+                    </Col>
+                </Row>
                 </div>
             </Collapse>
         </div>
