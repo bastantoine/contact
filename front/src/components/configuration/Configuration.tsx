@@ -3,7 +3,7 @@ import { Button, ButtonGroup, Form } from "react-bootstrap";
 import { Formik } from "formik";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
-import { ConfigType, FieldConfigType } from "../Home";
+import { ConfigType } from "../Home";
 import ConfigurationField from "./ConfigurationField";
 
 type PropsType = {
@@ -15,7 +15,8 @@ type PropsType = {
     },
 }
 type StateType = {
-    form_config: {[k: string]: {name: string, config: FieldConfigType}},
+    form_config: {[k: string]: any},
+    fields_keys_to_names: {[k: string]: string},
     fields: string[],
 }
 
@@ -23,16 +24,26 @@ class Configuration extends Component<PropsType, StateType> {
 
     constructor(props: PropsType) {
         super(props)
-        // Reformat a bit the config object: the key is used as the key of the child
-        // Component, this way when we add a new field, we set its key to a random
-        // string, and a blank name, so that a blank name is displayed, but each
-        // child component still has a unique key.
-        let form_config: {[k: string]: {name: string, config: FieldConfigType}} = {};
-        for (let [fieldName, fieldConfig] of Object.entries(this.props.config.raw_config))
-            form_config[fieldName] = {name: fieldName, config: fieldConfig};
+        // Reformat a bit the config object: 'flatten' the config by building an
+        // object where the keys are '<fieldName>-<param>' and the value the
+        // value of the param of the current field. This way, by using the same
+        // mapping '<fieldName>-<param>' for all the input's name, formik will
+        // know which value to update in case of change.
+        let form_config: {[k: string]: any} = {};
+        for (let [fieldName, fieldConfig] of Object.entries(this.props.config.raw_config)) {
+            for (let [param, value] of Object.entries(fieldConfig))
+                form_config[`${fieldName}-${param}`] = value;
+        }
         this.state = {
             form_config: form_config,
-            fields: Object.keys(form_config),
+            // Mapping of the field keys and field names. The field key is used
+            // only internally by react, while the field name is the name used
+            // in the server side config and displayed. In case of the field
+            // already created in the config on load, fieldKey == fieldName. In
+            // case of newly created fields, fieldKey = <random string>,
+            // fieldName = ''.
+            fields_keys_to_names: {},
+            fields: Object.keys(this.props.config.raw_config),
         };
     }
 
@@ -75,7 +86,17 @@ class Configuration extends Component<PropsType, StateType> {
                             {(provided) => (
                                 <div {...provided.droppableProps} ref={provided.innerRef}>
                                     {this.state.fields.map((fieldKey, index) => {
-                                        const {name, config} = values[fieldKey];
+                                        // Build an object with only the values
+                                        // related to this field, ie. whose key
+                                        // starts with the fieldKey
+                                        const config = Object.fromEntries(
+                                            Object.entries(values)
+                                                  .filter(([k, _]) => k.startsWith(fieldKey))
+                                                  .map(([k, v]) => [k.replace(`${fieldKey}-`, ''), v])
+                                        );
+                                        const fieldName = this.state.fields_keys_to_names[fieldKey] !== undefined ?
+                                                          this.state.fields_keys_to_names[fieldKey] :
+                                                          fieldKey
                                         return <Draggable key={fieldKey} draggableId={fieldKey} index={index}>
                                             {(provided) => (
                                                 <div
@@ -87,7 +108,7 @@ class Configuration extends Component<PropsType, StateType> {
                                                         onChange={handleChange}
                                                         onBlur={handleBlur}
                                                         fieldKey={fieldKey}
-                                                        fieldName={name}
+                                                        fieldName={fieldName}
                                                         fieldConfig={config}
                                                     ></ConfigurationField>
                                                 </div>
@@ -101,12 +122,13 @@ class Configuration extends Component<PropsType, StateType> {
                     </DragDropContext>
                     <ButtonGroup>
                         <Button onClick={() => {
-                            let form_config = this.state.form_config;
-                            let fields = this.state.fields;
+                            let {fields, fields_keys_to_names} = this.state;
+
+                            // Use a random string as the key, but keep a blank name
                             let new_field_key = Math.random().toString(36).substring(7);
                             fields.push(new_field_key);
-                            form_config[new_field_key] = {name: '', config: {type: ''}};
-                            this.setState({form_config: form_config, fields: fields});
+                            fields_keys_to_names[new_field_key] = '';
+                            this.setState({fields: fields, fields_keys_to_names: fields_keys_to_names});
                         }}>Add new field</Button>
                         <Button type="submit" variant="success">Save configuration</Button>
                     </ButtonGroup>

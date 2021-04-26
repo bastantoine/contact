@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import { Button, ButtonGroup, Col, Collapse, Form, Row } from "react-bootstrap";
-import { FieldConfigType } from "../Home";
 import { ATTRIBUTE_TYPE_COMPONENT_MAPPING } from "../TypeComponents";
 import './ConfigurationField.css'
 
 type PropsType = {
     fieldKey: string,
     fieldName: string,
-    fieldConfig: FieldConfigType,
+    fieldConfig: {[k: string]: any},
     onChange: {
         (e: React.ChangeEvent<any>): void;
         <T = string | React.ChangeEvent<any>>(field: T): T extends React.ChangeEvent<any> ? void : (e: string | React.ChangeEvent<any>) => void;
