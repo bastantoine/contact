@@ -68,6 +68,10 @@ class Configuration extends Component<PropsType, StateType> {
                         )
                         let fieldName = fieldValues.name || fieldKey;
                         if (fieldValues.name) delete fieldValues.name;
+                        for(let param of Object.keys(fieldValues)) {
+                            if (param === 'required' || param === 'primary_key')
+                                fieldValues[param] = fieldValues[param] !== []
+                        }
                         formattedConfig[fieldName] = fieldValues;
                     }
                     $.ajax({
