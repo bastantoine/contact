@@ -22,6 +22,7 @@ api = Blueprint('api', __name__, url_prefix="")
 from config import (
     Config,
     FILE_FIELDS,
+    InvalidConfigException,
     MissingRequiredValueException,
     validate_config,
     WrongTypeException,
@@ -95,10 +96,16 @@ def config_get():
     if not request.json:
         abort(400, 'Missing data')
 
-    status, message = validate_config(request.json)
-
-    if not status:
-        abort (400, message)
+    try:
+        validate_config(request.json)
+    except InvalidConfigException as ex:
+        response = jsonify({
+            "field": ex.field,
+            "param": ex.param,
+            "message": ex.message,
+        })
+        response.status = '400'
+        abort(response)
 
     with open(os.environ.get('CONFIG_FILE', 'config.json'), 'w') as file:
         file.write(dumps(request.json, indent=4))
