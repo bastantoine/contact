@@ -7,6 +7,10 @@ div.field-configuration-form {
     margin-bottom: 16px;
 }
 
+div.field-configuration-form-with-errors {
+    border: 1px solid rgb(220, 53, 69);
+}
+
 div.field-configuration-form > * {
     margin-bottom: 1rem;
 }

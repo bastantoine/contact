@@ -57,8 +57,10 @@ class Configuration extends Component<PropsType, StateType> {
         return <>
             <Formik
                 initialValues={this.state.form_config}
-                onSubmit={(values, {setSubmitting, resetForm}) => {
+                onSubmit={(values, {setSubmitting, setStatus, resetForm}) => {
                     setSubmitting(true);
+                    setStatus({});
+                    this.setState({error: null});
                     let formattedConfig: {[k: string]: {[k: string]: any}} = {};
                     for (let fieldKey of this.state.fields) {
                         let fieldValues = Object.fromEntries(
@@ -70,7 +72,12 @@ class Configuration extends Component<PropsType, StateType> {
                         if (fieldValues.name) delete fieldValues.name;
                         for(let param of Object.keys(fieldValues)) {
                             if (param === 'required' || param === 'primary_key')
-                                fieldValues[param] = fieldValues[param] !== []
+                                // In case required or primary_key were already
+                                // set in the server config, their value in
+                                // fieldValues is set to true. Otherwise when
+                                // they are set in the form by the user, they
+                                // are set to either ['on'] or []
+                                fieldValues[param] = Array.isArray(fieldValues[param]) ? fieldValues[param].length > 0 : fieldValues[param];
                         }
                         if (fieldValues.type === 'list' && fieldValues.inner_type) {
                             fieldValues.additional_type_parameters = {inner_type: fieldValues.inner_type};
@@ -88,8 +95,17 @@ class Configuration extends Component<PropsType, StateType> {
                         data: JSON.stringify(formattedConfig),
                         contentType: 'application/json'
                     })
-                        .fail((error) => this.setState({error: error}))
-                        .done(() => {this.props.configUpdatedHandler(formattedConfig); resetForm();})
+                        .fail((error) => {
+                            this.setState({error: error});
+                            if (error.responseJSON) {
+                                let fields: string[] = Array.isArray(error.responseJSON.field) ? error.responseJSON.field : [error.responseJSON.field]
+                                setStatus({fieldsErrors: fields.map((field) => `${field}-${error.responseJSON.param}`)});
+                            }
+                        })
+                        .done(() => {
+                            this.props.configUpdatedHandler(formattedConfig);
+                            resetForm();
+                        })
                         .always(() => setSubmitting(false));
                 }}
                 enableReinitialize
@@ -99,7 +115,8 @@ class Configuration extends Component<PropsType, StateType> {
                 handleChange,
                 handleBlur,
                 values,
-                isSubmitting}) => (
+                isSubmitting,
+                status}) => (
                 // We need the noValidate so that the browser will not try to
                 // valide the inputs and won't display any error message that
                 // would mess up with the validation we already have.
@@ -151,6 +168,7 @@ class Configuration extends Component<PropsType, StateType> {
                                                         fieldName={fieldName}
                                                         fieldConfig={config}
                                                         deleteFieldHandler={(fieldKey: string) => this.setState({fields: this.state.fields.filter((k) => k !== fieldKey)})}
+                                                        errorsFields={status && status.fieldsErrors ? status.fieldsErrors.filter((k: string) => k.startsWith(fieldKey)) : []}
                                                     ></ConfigurationField>
                                                 </div>
                                             )}
@@ -179,6 +197,7 @@ class Configuration extends Component<PropsType, StateType> {
             {this.state.error ?
             <Alert variant={"danger"} style={{marginTop: '16px'}}>
                 There has been an error while submitting the form. Please retry.<br/>
+                {this.state.error && this.state.error.responseJSON ? this.state.error.responseJSON.message : ''}
             </Alert> : <></>}
         </>
     }
