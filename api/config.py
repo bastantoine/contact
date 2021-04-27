@@ -1,6 +1,6 @@
 import argparse
 from json import loads, JSONDecodeError
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 import os
 import sys
 
@@ -18,6 +18,15 @@ class WrongTypeException(Exception):
         self.code = 'WRONG_TYPE'
         self.field = field
         self.expect_type = expect_type
+        super().__init__(*args)
+
+
+class InvalidConfigException(Exception):
+
+    def __init__(self, field: Union[str, list], param: str, message: str, *args: object) -> None:
+        self.field = field
+        self.param = param
+        self.message = message
         super().__init__(*args)
 
 
@@ -197,38 +206,59 @@ def validate_config_file(filename: str) -> Tuple[bool, str]:
     # File must be a valid JSON file
     try:
         with open(filename) as f:
-            return validate_config(loads(f.read()))
+            # validate_config doesn't return anything, but
+            # raises InvalidConfigException in case of error
+            validate_config(loads(f.read()))
+            return (True, 'Valid config file!')
     except JSONDecodeError:
         return (False, 'File is not a valid JSON')
+    except InvalidConfigException as ex:
+        return (False, ex.message)
 
-def validate_config(config: dict) -> Tuple[bool, str]:
+def validate_config(config: dict):
     # Config mustn't have two identical keys
     keys = list(config.keys())
     for key in keys:
         if keys.count(key) > 1:
-            return (False, f'Duplicate key found: {key}')
+            raise InvalidConfigException(key, '', f'Duplicate key found: {key}')
 
     # Config must have one and only one parameter marked as primary_key
     primary_key = {k: v for k, v in config.items() if v.get('primary_key')}
     if len(primary_key) == 0:
-        return (False, 'No parameter marked as "primary_key" found')
+        raise InvalidConfigException('', 'primary_key', 'No parameter marked as "primary_key" found')
     if len(primary_key) > 1:
-        return (False, f'Found {len(primary_key)} parameters marked as "primary_key": {", ".join(primary_key.keys)}')
+        raise InvalidConfigException(
+            list(primary_key.keys()),
+            'primary_key',
+            f'Found {len(primary_key)} parameters marked as "primary_key": {", ".join(primary_key.keys())}'
+        )
 
-    primary_key = primary_key[list(primary_key.keys())[0]]
+    primary_key_field_name = list(primary_key.keys())[0]
+    primary_key = primary_key[primary_key_field_name]
 
     # This primary key must be marked as required
     if not primary_key.get('required') or primary_key.get('required') != True:
-        return (False, f'Parameter marked as primary_key must also be marked as "required"')
+        raise InvalidConfigException(
+            primary_key_field_name,
+            'required',
+            'Parameter marked as primary_key must also be marked as "required"'
+        )
 
     def check_type(type_name: str, parameter_name: str, attribute_name: str) -> Tuple[bool, str]:
         if type_name is None:
             # Attribute is required
-            return (False, f'Missing "{attribute_name}" for parameter {parameter_name}')
+            raise InvalidConfigException(
+                parameter_name,
+                attribute_name,
+                f'Missing "{attribute_name}" for parameter {parameter_name}'
+            )
         if type_name not in FIELD_TYPE_MAPPING.keys():
             # Attribute value must be a valid one
-            return (False, f'Invalid value of attribute "{attribute_name}" for parameter {parameter_name}: {type_name}')
-        return (True, '')
+            raise InvalidConfigException(
+                parameter_name,
+                attribute_name,
+                f'Invalid value of attribute "{attribute_name}" for parameter {parameter_name}: {type_name}'
+            )
 
     def check_type_of_attributes(parameter_name: str, params: dict):
         MAPPING = {
@@ -245,49 +275,71 @@ def validate_config(config: dict) -> Tuple[bool, str]:
             if attribute == 'type':
                 # 'type' attribute is required
                 if not isinstance(params.get(attribute), expected_type):
-                    return (False, f'Invalid value of attribute "{attribute}" for parameter {parameter_name}: {params.get(attribute)}')
+                    raise InvalidConfigException(
+                        parameter_name,
+                        attribute,
+                        f'Invalid value of attribute "{attribute}" for parameter {parameter_name}: {params.get(attribute)}'
+                    )
             elif params.get(attribute) is not None:
                 if not isinstance(params.get(attribute), expected_type):
-                    return (False, f'Invalid value of attribute "{attribute}" for parameter {parameter_name}: {params.get(attribute)}')
-        return (True, '')
+                    raise InvalidConfigException(
+                        parameter_name,
+                        attribute,
+                        f'Invalid value of attribute "{attribute}" for parameter {parameter_name}: {params.get(attribute)}'
+                    )
 
     for parameter_name, params in config.items():
         # Make sure 'type' is there and with a valid value
         param_type = params.get('type')
-        check, message = check_type_of_attributes(parameter_name, params)
-        if not check:
-            return (False, message)
-        check, message = check_type(param_type, parameter_name, 'type')
-        if not check:
-            return (False, message)
+        check_type_of_attributes(parameter_name, params)
+        check_type(param_type, parameter_name, 'type')
         if param_type == 'list':
             # 'list' parameters must have a 'additional_type_parameters' attribute as an object
             additional_params = params.get('additional_type_parameters')
             if additional_params is None:
-                return (False, f'Missing "additional_type_parameters" attribute for parameter {parameter_name} of "type": "list"')
+                raise InvalidConfigException(
+                    parameter_name,
+                    'additional_type_parameters',
+                    f'Missing "additional_type_parameters" attribute for parameter {parameter_name} of "type": "list"'
+                )
             if not isinstance(additional_params, dict):
-                return (False, f'Invalid value of attribute "additional_type_parameters" for parameter {parameter_name}: {additional_params}')
+                raise InvalidConfigException(
+                    parameter_name,
+                    'additional_type_parameters',
+                    f'Invalid value of attribute "additional_type_parameters" for parameter {parameter_name}: {additional_params}'
+                )
             # Make sure 'inner_type' is there and with a valid value
             inner_param_type = additional_params.get('inner_type')
-            check, message = check_type(inner_param_type, parameter_name, 'inner_type')
-            if not check:
-                return (False, message)
+            check_type(inner_param_type, parameter_name, 'inner_type')
             if inner_param_type == 'list':
                 # We cannot have a list of lists
-                return (False, f'Found parameter {parameter_name} of "type": "list" with "inner_type": "list"')
+                raise InvalidConfigException(
+                    parameter_name,
+                    'inner_type',
+                    f'Found parameter {parameter_name} of "type": "list" with "inner_type": "list"'
+                )
 
     params_with_display_name = {k: v.get('display_name') for k, v in config.items() if v.get('display_name')}
     for parameter_name, display_name_value in params_with_display_name.items():
         if not isinstance(display_name_value, str):
             # 'display_name' when set must be a str
-            return (False, f'Invalid value of attribute "display_name" for parameter {parameter_name}: {display_name_value}')
+            raise InvalidConfigException(
+                parameter_name,
+                'display_name',
+                f'Invalid value of attribute "display_name" for parameter {parameter_name}: {display_name_value}'
+            )
 
     params_with_form_help_text = {k: v.get('form_help_text') for k, v in config.items() if v.get('form_help_text')}
     for parameter_name, form_help_text_value in params_with_form_help_text.items():
         if not isinstance(form_help_text_value, str):
             # 'form_help_text' when set must be a str
-            return (False, f'Invalid value of attribute "form_help_text" for parameter {parameter_name}: {form_help_text_value}')
+            raise InvalidConfigException(
+                parameter_name,
+                'form_help_text',
+                f'Invalid value of attribute "form_help_text" for parameter {parameter_name}: {form_help_text_value}'
+            )
 
+    # TODO: Find a better solution to avoid looping over all the values multiple times
     params_with_sort_key = sorted(
         [(k, v.get('sort_key')) for k, v in config.items() if v.get('sort_key')],
         key= lambda v: v[1]
@@ -296,8 +348,14 @@ def validate_config(config: dict) -> Tuple[bool, str]:
     for parameter_name, sort_key_value in params_with_sort_key:
         if sort_key_values.count(sort_key_value) > 1:
             # More than one parameter with the same 'sort_key' value
-            return (False, f'Found {sort_key_values.count(sort_key_value)} parameters with "sort_key": "{sort_key_value}"')
+            params_with_same_sort_key = [field_name for field_name, value in params_with_sort_key if value == sort_key_value]
+            raise InvalidConfigException(
+                list(params_with_same_sort_key),
+                'sort_key',
+                f'Found {len(params_with_same_sort_key)} parameters with "sort_key": "{sort_key_value}"'
+            )
 
+    # TODO: Find a better solution to avoid looping over all the values multiple times
     params_with_main_attribute = sorted(
         [(k, v.get('main_attribute')) for k, v in config.items() if v.get('main_attribute')],
         key= lambda v: v[1]
@@ -306,9 +364,12 @@ def validate_config(config: dict) -> Tuple[bool, str]:
     for parameter_name, main_attribute_value in params_with_main_attribute:
         if main_attribute_values.count(main_attribute_value) > 1:
             # More than one parameter with the same 'main_attribute' value
-            return (False, f'Found {main_attribute_values.count(main_attribute_value)} parameters with "main_attribute": "{main_attribute_value}"')
-
-    return (True, 'Valid config file!')
+            params_with_same_main_attribute = [field_name for field_name, value in params_with_main_attribute if value == main_attribute_value]
+            raise InvalidConfigException(
+                list(params_with_same_main_attribute),
+                'main_attribute',
+                f'Found {len(params_with_same_main_attribute)} parameters with "main_attribute": "{main_attribute_value}"'
+            )
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

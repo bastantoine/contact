@@ -16,15 +16,28 @@ type PropsType = {
         <T = any>(fieldOrEvent: T): T extends string ? (e: any) => void : void;
     },
     deleteFieldHandler: ((fieldKey: string) => void),
+    errorsFields: string[],
 }
 
 // We have to add the property children, otherwise we have an error "Property
 // 'children' does not exist on type 'IntrinsicAttributes & PropsType'"
 function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
-    const [isButtonDisplayedNameDisplayed, setIsButtonDisplayedNameDisplayed] = useState(props.fieldConfig.display_name !== undefined);
-    const [isButtonFormHelpTextDisplayed, setIsButtonFormHelpTextDisplayed] = useState(props.fieldConfig.form_help_text !== undefined);
-    const [isButtonMainAttributeDisplayed, setIsButtonMainAttributeDisplayed] = useState(props.fieldConfig.main_attribute !== undefined);
-    const [isButtonSortKeyDisplated, setIsButtonSortKeyDisplated] = useState(props.fieldConfig.sort_key !== undefined);
+    const [isButtonDisplayedNameDisplayed, setIsButtonDisplayedNameDisplayed] = useState(
+        props.fieldConfig.display_name !== undefined ||
+        props.errorsFields.includes(`${props.fieldKey}-display_name`)
+    );
+    const [isButtonFormHelpTextDisplayed, setIsButtonFormHelpTextDisplayed] = useState(
+        props.fieldConfig.form_help_text !== undefined ||
+        props.errorsFields.includes(`${props.fieldKey}-form_help_text`)
+    );
+    const [isButtonMainAttributeDisplayed, setIsButtonMainAttributeDisplayed] = useState(
+        props.fieldConfig.main_attribute !== undefined ||
+        props.errorsFields.includes(`${props.fieldKey}-main_attribute`)
+    );
+    const [isButtonSortKeyDisplated, setIsButtonSortKeyDisplated] = useState(
+        props.fieldConfig.sort_key !== undefined ||
+        props.errorsFields.includes(`${props.fieldKey}-sort_key`)
+    );
     const [open, setOpen] = useState(false);
 
     let title = ((props.fieldConfig.display_name && props.fieldConfig.display_name) ||
@@ -38,7 +51,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
     const [typeHook, setTypeHook] = useState(props.fieldConfig.type)
 
     return <>
-        <div className="field-configuration-form">
+        <div className={`field-configuration-form ${props.errorsFields.length > 0 ? "field-configuration-form-with-errors" : ''}`}>
             <div
                 onClick={() => setOpen(!open)}
                 aria-controls={`config-form-field-${props.fieldName}`}
@@ -61,6 +74,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                             onChange={(event) => {setFieldNameHook(event.target.value); props.onChange(event)}}
                             onBlur={(event: {target: {value: string}}) => {setTitleHookOrDefault(event.target.value); props.onBlur(event)}}
                             name={`${props.fieldKey}-name`}
+                            isInvalid={props.errorsFields.includes(`${props.fieldKey}-name`)}
                             required
                         />
                     </Col>
@@ -76,6 +90,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                             onChange={(event) => {setTypeHook(event.target.value); props.onChange(event)}}
                             onBlur={props.onBlur}
                             name={`${props.fieldKey}-type`}
+                            isInvalid={props.errorsFields.includes(`${props.fieldKey}-type`)}
                             required
                         >
                             <option>Choose type...</option>
@@ -94,6 +109,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                                 onChange={props.onChange}
                                 onBlur={props.onBlur}
                                 name={`${props.fieldKey}-required`}
+                                isInvalid={props.errorsFields.includes(`${props.fieldKey}-required`)}
                             />
                             <Form.Check
                                 type="checkbox"
@@ -103,6 +119,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                                 onChange={props.onChange}
                                 onBlur={props.onBlur}
                                 name={`${props.fieldKey}-primary_key`}
+                                isInvalid={props.errorsFields.includes(`${props.fieldKey}-primary_key`)}
                             />
                         </Form.Row>
                     </Col>
@@ -123,6 +140,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                             onChange={props.onChange}
                             onBlur={props.onBlur}
                             name={`${props.fieldKey}-inner_type`}
+                            isInvalid={props.errorsFields.includes(`${props.fieldKey}-inner_type`)}
                             required
                         >
                             <option>Choose type...</option>
@@ -145,6 +163,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                             onChange={props.onChange}
                             onBlur={props.onBlur}
                             name={`${props.fieldKey}-accepted_types`}
+                            isInvalid={props.errorsFields.includes(`${props.fieldKey}-accepted_types`)}
                             required
                         />
                         <Form.Text muted>Enter the format of images that should be accepted, by separating them with a comma. Ex: 'png, jpg, jpeg'</Form.Text>
@@ -196,6 +215,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                             onBlur={(event: {target: {value: string}}) => {setTitleHookOrDefault(event.target.value); props.onBlur(event)}}
                             onChange={props.onChange}
                             name={`${props.fieldKey}-display_name`}
+                            isInvalid={props.errorsFields.includes(`${props.fieldKey}-display_name`)}
                         />
                     </Col>
                 </Form.Group> : <></>}
@@ -211,6 +231,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                             onChange={props.onChange}
                             onBlur={props.onBlur}
                             name={`${props.fieldKey}-form_help_text`}
+                            isInvalid={props.errorsFields.includes(`${props.fieldKey}-form_help_text`)}
                         />
                     </Col>
                 </Form.Group> : <></>}
@@ -226,6 +247,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                             onChange={props.onChange}
                             onBlur={props.onBlur}
                             name={`${props.fieldKey}-main_attribute`}
+                            isInvalid={props.errorsFields.includes(`${props.fieldKey}-main_attribute`)}
                         />
                     </Col>
                 </Form.Group> : <></>}
@@ -241,6 +263,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                             onChange={props.onChange}
                             onBlur={props.onBlur}
                             name={`${props.fieldKey}-sort_key`}
+                            isInvalid={props.errorsFields.includes(`${props.fieldKey}-sort_key`)}
                         />
                     </Col>
                 </Form.Group> : <></>}
