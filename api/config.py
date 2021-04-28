@@ -294,7 +294,8 @@ def validate_config(config: dict):
         check_type_of_attributes(parameter_name, params)
         check_type(param_type, parameter_name, 'type')
         if param_type == 'list':
-            # 'list' parameters must have a 'additional_type_parameters' attribute as an object
+            # 'list' parameters must have a 'additional_type_parameters'
+            # attribute as an JSON object (ie. a python dict)
             additional_params = params.get('additional_type_parameters')
             if additional_params is None:
                 raise InvalidConfigException(
@@ -318,6 +319,44 @@ def validate_config(config: dict):
                     'inner_type',
                     f'Found parameter {parameter_name} of "type": "list" with "inner_type": "list"'
                 )
+
+        if param_type == 'image' and params.get('additional_type_parameters') is not None:
+            # In case a field of type 'image' has a 'additional_type_parameters' attribute, check
+            # it's a JSON object (ie. a python dict) and check its content
+            additional_params = params.get('additional_type_parameters')
+            if not isinstance(additional_params, dict):
+                raise InvalidConfigException(
+                    parameter_name,
+                    'additional_type_parameters',
+                    f'Invalid value of attribute "additional_type_parameters" for parameter {parameter_name}: {additional_params}'
+                )
+            # If 'additional_type_parameters" is provided, make sure it's not empty
+            accepted_types = additional_params.get('accepted_types')
+            if accepted_types is None:
+                raise InvalidConfigException(
+                    parameter_name,
+                    'accepted_types',
+                    f'Missing "accepted_types" attribute for parameter {parameter_name} of "type": "image"'
+                )
+            if not isinstance(accepted_types, list):
+                raise InvalidConfigException(
+                    parameter_name,
+                    'accepted_types',
+                    f'Invalid value of attribute "accepted_types" for parameter {parameter_name}: {accepted_types}'
+                )
+            if len(accepted_types) == 0:
+                raise InvalidConfigException(
+                    parameter_name,
+                    'accepted_types',
+                    f'Invalid value of attribute "accepted_types" for parameter {parameter_name}: {accepted_types}'
+                )
+            for accepted_type in accepted_types:
+                if not isinstance(accepted_type, str):
+                    raise InvalidConfigException(
+                        parameter_name,
+                        'accepted_types',
+                        f'Invalid value of attribute "accepted_types" for parameter {parameter_name}: {accepted_types}'
+                    )
 
     params_with_display_name = {k: v.get('display_name') for k, v in config.items() if v.get('display_name')}
     for parameter_name, display_name_value in params_with_display_name.items():
