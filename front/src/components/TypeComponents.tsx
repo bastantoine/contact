@@ -74,4 +74,6 @@ export const LIST_ALLOWED_INNER_TYPES = [
     'str',
     'url',
     'email',
-]
+] as const
+// const assertions
+// https://blog.logrocket.com/const-assertions-are-the-killer-new-typescript-feature-b73451f35802/

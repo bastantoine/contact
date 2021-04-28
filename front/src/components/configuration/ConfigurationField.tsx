@@ -132,7 +132,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                         <Form.Control
                             as="select"
                             defaultValue={props.fieldConfig.additional_type_parameters ? (
-                                            LIST_ALLOWED_INNER_TYPES.includes(String(props.fieldConfig.additional_type_parameters.inner_type)) ?
+                                            LIST_ALLOWED_INNER_TYPES.includes(props.fieldConfig.additional_type_parameters.inner_type) ?
                                             props.fieldConfig.additional_type_parameters.inner_type :
                                             "Choose type..."
                                           ) : undefined

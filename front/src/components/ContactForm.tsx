@@ -3,8 +3,9 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 import React, { Component } from "react";
 
-import { ALLOWED_TYPES } from "./TypeComponents";
+import { LIST_ALLOWED_INNER_TYPES, ALLOWED_TYPES } from "./TypeComponents";
 import { upperFirstLetter } from "../utils";
+import { ConfigType } from "./Home";
 
 type PropsType = {
     initial_value: {[k: string]: any},
@@ -12,7 +13,7 @@ type PropsType = {
         main_attributes: string[],
         attributes: string[],
         primary_key: string,
-        raw_config: any,
+        raw_config: ConfigType,
     },
     fileInputChangeHandler: (attribute: string, file: File) => void,
     submitHandler: (values: {}) => JQueryXHR,
@@ -35,7 +36,7 @@ class ContactForm extends Component<PropsType, StateType> {
         attribute_type: ALLOWED_TYPES,
         // inner_type is used only when attribute_type is a list,
         // in this case it is the type of the values inside the list
-        inner_type?: ALLOWED_TYPES
+        inner_type?: typeof LIST_ALLOWED_INNER_TYPES[number] | ''
     ): string {
         switch (attribute_type) {
             case "image":
@@ -84,7 +85,7 @@ class ContactForm extends Component<PropsType, StateType> {
         // that the TS type checker doesn't complain, but for this case we build
         // a custom validator based on the inner_type additional parameter
         // provided in the config.
-        const YUP_TYPE_BINDINGS = {
+        const YUP_TYPE_BINDINGS: {[k: string]: Yup.BaseSchema} = {
             integer: Yup.number(),
             str: Yup.string(),
             image: Yup.mixed(),
@@ -100,7 +101,7 @@ class ContactForm extends Component<PropsType, StateType> {
         for (let attribute of this.props.config.attributes) {
             if (attribute !== this.props.config.primary_key) {
                 const attribute_config = this.props.config.raw_config[attribute];
-                const attribute_type: keyof typeof YUP_TYPE_BINDINGS = attribute_config.type;
+                const attribute_type = attribute_config.type;
                 if (this.props.initial_value[attribute] === undefined) {
                     // Make sure all the attribute have an initial value, even if empty
                     this.props.initial_value[attribute] = '';
@@ -114,8 +115,8 @@ class ContactForm extends Component<PropsType, StateType> {
 
                 let validator: Yup.BaseSchema;
                 if (attribute_type === 'list') {
-                    const inner_type: keyof typeof YUP_TYPE_BINDINGS = attribute_config.additional_type_parameters.inner_type;
-                    validator = this.array_validator(YUP_TYPE_BINDINGS[inner_type]);
+                    const inner_type = attribute_config.additional_type_parameters!.inner_type;
+                    validator = this.array_validator(YUP_TYPE_BINDINGS[inner_type!]);
                 } else {
                     validator = YUP_TYPE_BINDINGS[attribute_type];
                 }
@@ -144,7 +145,7 @@ class ContactForm extends Component<PropsType, StateType> {
                         // When button submits form and form is in the process of submitting, submit button is disabled
                         setSubmitting(true);
                         for (let attribute of this.props.config.attributes) {
-                            const attribute_type: string = this.props.config.raw_config[attribute].type;
+                            const attribute_type = this.props.config.raw_config[attribute].type;
                             if (attribute_type === 'list') {
                                 // Make sure the attributes that expect a
                                 // list receive a list, even if empty

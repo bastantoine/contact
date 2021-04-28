@@ -7,7 +7,7 @@ import { join } from "../utils";
 import ContactForm from "./ContactForm";
 import ContactDetails from "./ContactDetails";
 import Configuration from "./configuration/Configuration";
-import { ALLOWED_TYPES, FILE_FIELDS } from "./TypeComponents";
+import { ALLOWED_TYPES, FILE_FIELDS, LIST_ALLOWED_INNER_TYPES } from "./TypeComponents";
 
 
 export type FieldConfigType = {
@@ -18,7 +18,7 @@ export type FieldConfigType = {
     main_attribute?: number,
     sort_key?: number,
     additional_type_parameters?: {
-        inner_type?: string,
+        inner_type?: typeof LIST_ALLOWED_INNER_TYPES[number],
         accepted_types?: string[],
     },
     form_help_text?: string,
