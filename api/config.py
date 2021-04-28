@@ -23,10 +23,10 @@ class WrongTypeException(Exception):
 
 class InvalidConfigException(Exception):
 
-    def __init__(self, field: Union[str, list], param: str, message: str, *args: object) -> None:
+    def __init__(self, field: Union[str, list], param: str, pattern: str, *args: object, **pattern_params: dict) -> None:
         self.field = field
         self.param = param
-        self.message = message
+        self.message = pattern.format(field=field, param=param, **pattern_params)
         super().__init__(*args)
 
 
@@ -216,6 +216,9 @@ def validate_config_file(filename: str) -> Tuple[bool, str]:
         return (False, ex.message)
 
 def validate_config(config: dict):
+    MISSING_PARAMETER_FROM_FIELD_TEMPLATE = 'Missing parameter "{param}" from field "{field}"'
+    INVALID_VALUE_OF_PARAMETER = 'Invalid value of parameter "{param}" for field "{field}": {value}'
+
     # Config mustn't have two identical keys
     keys = list(config.keys())
     for key in keys:
@@ -247,18 +250,10 @@ def validate_config(config: dict):
     def check_type(type_name: str, parameter_name: str, attribute_name: str) -> Tuple[bool, str]:
         if type_name is None:
             # Attribute is required
-            raise InvalidConfigException(
-                parameter_name,
-                attribute_name,
-                f'Missing "{attribute_name}" for parameter {parameter_name}'
-            )
+            raise InvalidConfigException(parameter_name, attribute_name, MISSING_PARAMETER_FROM_FIELD_TEMPLATE)
         if type_name not in FIELD_TYPE_MAPPING.keys():
             # Attribute value must be a valid one
-            raise InvalidConfigException(
-                parameter_name,
-                attribute_name,
-                f'Invalid value of attribute "{attribute_name}" for parameter {parameter_name}: {type_name}'
-            )
+            raise InvalidConfigException(parameter_name, attribute_name, INVALID_VALUE_OF_PARAMETER, value=type_name)
 
     def check_type_of_attributes(parameter_name: str, params: dict):
         MAPPING = {
@@ -278,14 +273,16 @@ def validate_config(config: dict):
                     raise InvalidConfigException(
                         parameter_name,
                         attribute,
-                        f'Invalid value of attribute "{attribute}" for parameter {parameter_name}: {params.get(attribute)}'
+                        INVALID_VALUE_OF_PARAMETER,
+                        value=params.get(attribute)
                     )
             elif params.get(attribute) is not None:
                 if not isinstance(params.get(attribute), expected_type):
                     raise InvalidConfigException(
                         parameter_name,
                         attribute,
-                        f'Invalid value of attribute "{attribute}" for parameter {parameter_name}: {params.get(attribute)}'
+                        INVALID_VALUE_OF_PARAMETER,
+                        value=params.get(attribute)
                     )
 
     for parameter_name, params in config.items():
@@ -301,13 +298,14 @@ def validate_config(config: dict):
                 raise InvalidConfigException(
                     parameter_name,
                     'additional_type_parameters',
-                    f'Missing "additional_type_parameters" attribute for parameter {parameter_name} of "type": "list"'
+                    MISSING_PARAMETER_FROM_FIELD_TEMPLATE+' of "type": "list"'
                 )
             if not isinstance(additional_params, dict):
                 raise InvalidConfigException(
                     parameter_name,
                     'additional_type_parameters',
-                    f'Invalid value of attribute "additional_type_parameters" for parameter {parameter_name}: {additional_params}'
+                    INVALID_VALUE_OF_PARAMETER,
+                    value=additional_params
                 )
             # Make sure 'inner_type' is there and with a valid value
             inner_param_type = additional_params.get('inner_type')
@@ -328,7 +326,8 @@ def validate_config(config: dict):
                 raise InvalidConfigException(
                     parameter_name,
                     'additional_type_parameters',
-                    f'Invalid value of attribute "additional_type_parameters" for parameter {parameter_name}: {additional_params}'
+                    INVALID_VALUE_OF_PARAMETER,
+                    value=additional_params
                 )
             # If 'additional_type_parameters" is provided, make sure it's not empty
             accepted_types = additional_params.get('accepted_types')
@@ -336,26 +335,29 @@ def validate_config(config: dict):
                 raise InvalidConfigException(
                     parameter_name,
                     'accepted_types',
-                    f'Missing "accepted_types" attribute for parameter {parameter_name} of "type": "image"'
+                    MISSING_PARAMETER_FROM_FIELD_TEMPLATE+' of "type": "list"'
                 )
             if not isinstance(accepted_types, list):
                 raise InvalidConfigException(
                     parameter_name,
                     'accepted_types',
-                    f'Invalid value of attribute "accepted_types" for parameter {parameter_name}: {accepted_types}'
+                    INVALID_VALUE_OF_PARAMETER,
+                    value=accepted_types
                 )
             if len(accepted_types) == 0:
                 raise InvalidConfigException(
                     parameter_name,
                     'accepted_types',
-                    f'Invalid value of attribute "accepted_types" for parameter {parameter_name}: {accepted_types}'
+                    INVALID_VALUE_OF_PARAMETER,
+                    value=accepted_types
                 )
             for accepted_type in accepted_types:
                 if not isinstance(accepted_type, str):
                     raise InvalidConfigException(
                         parameter_name,
                         'accepted_types',
-                        f'Invalid value of attribute "accepted_types" for parameter {parameter_name}: {accepted_types}'
+                        INVALID_VALUE_OF_PARAMETER,
+                        value=accepted_types
                     )
 
     params_with_display_name = {k: v.get('display_name') for k, v in config.items() if v.get('display_name')}
@@ -365,7 +367,8 @@ def validate_config(config: dict):
             raise InvalidConfigException(
                 parameter_name,
                 'display_name',
-                f'Invalid value of attribute "display_name" for parameter {parameter_name}: {display_name_value}'
+                INVALID_VALUE_OF_PARAMETER,
+                value=display_name_value
             )
 
     params_with_form_help_text = {k: v.get('form_help_text') for k, v in config.items() if v.get('form_help_text')}
@@ -375,7 +378,8 @@ def validate_config(config: dict):
             raise InvalidConfigException(
                 parameter_name,
                 'form_help_text',
-                f'Invalid value of attribute "form_help_text" for parameter {parameter_name}: {form_help_text_value}'
+                INVALID_VALUE_OF_PARAMETER,
+                value=form_help_text_value
             )
 
     # TODO: Find a better solution to avoid looping over all the values multiple times
