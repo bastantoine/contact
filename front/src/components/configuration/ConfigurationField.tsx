@@ -19,6 +19,18 @@ type PropsType = {
     errorsFields: string[],
 }
 
+function getFieldTitle(fieldName: string, displayName: string): JSX.Element {
+    if (fieldName && displayName) {
+        return <>{displayName}&nbsp;<i>({fieldName})</i></>;
+    } else if (fieldName) {
+        return <>{fieldName}</>;
+    } else if (displayName) {
+        return <>{displayName}</>;
+    } else {
+        return <i>&lt; New field &gt;</i>;
+    }
+}
+
 // We have to add the property children, otherwise we have an error "Property
 // 'children' does not exist on type 'IntrinsicAttributes & PropsType'"
 function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
@@ -40,14 +52,8 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
     );
     const [open, setOpen] = useState(false);
 
-    let title = ((props.fieldConfig.display_name && props.fieldConfig.display_name) ||
-                 ((props.fieldName !== '') && props.fieldName) ||
-                 ''
-                );
-    const [titleHook, setTitleHook] = useState(title);
-    const setTitleHookOrDefault = (new_val: string) => {new_val !== '' ? setTitleHook(new_val) : setTitleHook(fieldNameHook || titleHook)};
-    // Hook that stores the current value of the field name. Used to properly set the title of the change
     const [fieldNameHook, setFieldNameHook] = useState(props.fieldName);
+    const [displayNameHook, setDisplayNameHook] = useState(props.fieldConfig.display_name);
     const [typeHook, setTypeHook] = useState(props.fieldConfig.type)
 
     return <>
@@ -58,7 +64,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                 aria-expanded={open}
                 className="field-configuration-name-title"
             >
-                <span className="field-configuration-name-title-value">{titleHook !== '' ? titleHook : <i>&lt; New field &gt;</i>}</span>
+                <span className="field-configuration-name-title-value">{getFieldTitle(fieldNameHook, displayNameHook)}</span>
             </div>
             <Collapse in={open}>
                 <div id={`config-form-field-${props.fieldName}`}>
@@ -72,7 +78,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                             placeholder="Name"
                             defaultValue={props.fieldName}
                             onChange={(event) => {setFieldNameHook(event.target.value); props.onChange(event)}}
-                            onBlur={(event: {target: {value: string}}) => {setTitleHookOrDefault(event.target.value); props.onBlur(event)}}
+                            onBlur={props.onBlur}
                             name={`${props.fieldKey}-name`}
                             isInvalid={props.errorsFields.includes(`${props.fieldKey}-name`)}
                             required
@@ -212,8 +218,8 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                             type="text"
                             placeholder="Display name"
                             defaultValue={props.fieldConfig.display_name}
-                            onBlur={(event: {target: {value: string}}) => {setTitleHookOrDefault(event.target.value); props.onBlur(event)}}
-                            onChange={props.onChange}
+                            onBlur={props.onBlur}
+                            onChange={(event) => {setDisplayNameHook(event.target.value); props.onChange(event)}}
                             name={`${props.fieldKey}-display_name`}
                             isInvalid={props.errorsFields.includes(`${props.fieldKey}-display_name`)}
                         />
