@@ -23,6 +23,7 @@ type StateType = {
     fields_keys_to_names: {[k: string]: string},
     fields: string[],
     error: null | JQuery.jqXHR,
+    submitSucessfull: boolean,
 }
 
 class Configuration extends Component<PropsType, StateType> {
@@ -41,6 +42,7 @@ class Configuration extends Component<PropsType, StateType> {
         }
         this.state = {
             error: null,
+            submitSucessfull: false,
             form_config: form_config,
             // Mapping of the field keys and field names. The field key is used
             // only internally by react, while the field name is the name used
@@ -60,7 +62,7 @@ class Configuration extends Component<PropsType, StateType> {
                 onSubmit={(values, {setSubmitting, setStatus, resetForm}) => {
                     setSubmitting(true);
                     setStatus({});
-                    this.setState({error: null});
+                    this.setState({error: null, submitSucessfull: false});
                     let formattedConfig: {[k: string]: {[k: string]: any}} = {};
                     for (let fieldKey of this.state.fields) {
                         let fieldValues = Object.fromEntries(
@@ -103,6 +105,7 @@ class Configuration extends Component<PropsType, StateType> {
                             }
                         })
                         .done(() => {
+                            this.setState({submitSucessfull: true});
                             this.props.configUpdatedHandler(formattedConfig);
                             resetForm();
                         })
@@ -194,9 +197,10 @@ class Configuration extends Component<PropsType, StateType> {
                 </Form>
             )}
             </Formik>
-            {this.state.error ?
-            <Alert variant={"danger"} style={{marginTop: '16px'}}>
-                There has been an error while submitting the form. Please retry.<br/>
+            {this.state.error || this.state.submitSucessfull ?
+            <Alert variant={this.state.submitSucessfull ? "success" : "danger"} style={{marginTop: '16px'}}>
+                {this.state.submitSucessfull ? "Configuration sucessfully saved" : <></>}
+                {this.state.error ? "There has been an error while submitting the form. Please retry." : <></>}<br/>
                 {this.state.error && this.state.error.responseJSON ? this.state.error.responseJSON.message : ''}
             </Alert> : <></>}
         </>
