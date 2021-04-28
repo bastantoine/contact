@@ -91,6 +91,7 @@ class Field:
 class FieldType:
     """Class used to represent a field type. Shouldn't be used, but rather subclassed
     """
+    type_name: str
     def check(self, value: Any, additional_params: dict={}) -> bool:
         """
         """
@@ -104,7 +105,7 @@ class FieldType:
     def _raise_wrong_type_error(self, value):
         raise WrongTypeException(
             '', # Field name, set it to blank here because we don't have it, will be set to the right value later
-            TYPE_FIELD_MAPPING[self.__class__],
+            self.type_name or TYPE_FIELD_MAPPING[self.__class__],
             f"Wrong type for {self.__class__.__name__} with value {value} ({type(value).__name__})",
         )
 
@@ -123,6 +124,18 @@ class StrFieldType(FieldType):
     """
     def check(self, value: Any, additional_params: dict={}) -> bool:
         if not isinstance(value, str):
+            self._raise_wrong_type_error(value)
+        return True
+
+
+class ToggleFieldType(FieldType):
+    """Check the value is a boolean
+    """
+    # Change the type displayed, otherwise it'll say
+    # 'Wrong type for <field name>, expected toggle'
+    type_name = 'boolean'
+    def check(self, value: Any, additional_params: dict={}) -> bool:
+        if not isinstance(value, bool):
             self._raise_wrong_type_error(value)
         return True
 
@@ -185,6 +198,7 @@ FIELD_TYPE_MAPPING: Dict[str, 'FieldType'] = {
     'str': StrFieldType(),
     'list': ListFieldType(),
     'image': ImageFieldType(),
+    'toggle': ToggleFieldType(),
 
     # Same as type checker as str, but different type
     # names to provide different displays in the front
@@ -359,6 +373,43 @@ def validate_config(config: dict):
                         INVALID_VALUE_OF_PARAMETER,
                         value=accepted_types
                     )
+
+        if param_type == 'toggle' and params.get('additional_type_parameters') is not None:
+            # In case a field of type 'toggle' has a 'additional_type_parameters' attribute, check
+            # it's a JSON object (ie. a python dict) and check its content
+            additional_params = params.get('additional_type_parameters')
+            if not isinstance(additional_params, dict):
+                raise InvalidConfigException(
+                    parameter_name,
+                    'additional_type_parameters',
+                    INVALID_VALUE_OF_PARAMETER,
+                    value=additional_params
+                )
+            # If 'additional_type_parameters" is provided, make sure it's not empty
+            value_true = additional_params.get('value_true')
+            value_false = additional_params.get('value_false')
+            if value_true is None and value_false is None:
+                raise InvalidConfigException(
+                    parameter_name,
+                    ['value_true', 'value_false'],
+                    MISSING_PARAMETER_FROM_FIELD_TEMPLATE+' of "type": "toggle"'
+                )
+            for name, value in [('value_true', value_true), ('value_false', value_false)]:
+                if not isinstance(value, str):
+                    raise InvalidConfigException(
+                        parameter_name,
+                        name,
+                        INVALID_VALUE_OF_PARAMETER,
+                        value=value
+                    )
+            # Do not allow to have only one of them set to an empty string
+            if (value_true == '' and value_false != '') or (value_true != '' and value_false == ''):
+                raise InvalidConfigException(
+                    parameter_name,
+                    'value_true' if value_true == '' else value_false,
+                    INVALID_VALUE_OF_PARAMETER,
+                    value=value_true if value_true == '' else value_false
+                )
 
     params_with_display_name = {k: v.get('display_name') for k, v in config.items() if v.get('display_name')}
     for parameter_name, display_name_value in params_with_display_name.items():
