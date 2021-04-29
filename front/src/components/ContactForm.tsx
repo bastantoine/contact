@@ -93,6 +93,7 @@ class ContactForm extends Component<PropsType, StateType> {
             url: Yup.string(),
             email: Yup.string().email(),
             list: Yup.array(),
+            toggle: Yup.boolean(),
         }
 
         let shape: {[k: string]: Yup.BaseSchema} = {}
@@ -151,6 +152,8 @@ class ContactForm extends Component<PropsType, StateType> {
                                 // list receive a list, even if empty
                                 values[attribute] = values[attribute] ? values[attribute].split(',').map((val: string) => val.trim()) : [];
                             }
+                            if (attribute_type === 'toggle')
+                                values[attribute] = !!values[attribute] // Make sure it's a boolean
                         }
                         this.props.submitHandler(values)
                             .fail((error) => {
