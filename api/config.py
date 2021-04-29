@@ -148,7 +148,7 @@ class ListFieldType(FieldType):
     def _check_additional_params(self, value: Any, additional_params: dict) -> bool:
         inner_type = additional_params.get('inner_type')
         if not inner_type:
-            return True
+            return False
         field_type = FIELD_TYPE_MAPPING[inner_type]
         return all(field_type.check(val, additional_params) for val in value)
 
