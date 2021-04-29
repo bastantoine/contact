@@ -101,7 +101,8 @@ class Configuration extends Component<PropsType, StateType> {
                             this.setState({error: error});
                             if (error.responseJSON) {
                                 let fields: string[] = Array.isArray(error.responseJSON.field) ? error.responseJSON.field : [error.responseJSON.field]
-                                setStatus({fieldsErrors: fields.map((field) => `${field}-${error.responseJSON.param}`)});
+                                let params: string[] = Array.isArray(error.responseJSON.param) ? error.responseJSON.param : [error.responseJSON.param]
+                                setStatus({fieldsErrors: fields.map((field) => params.map((param) => `${field}-${param}`)).flat()});
                             }
                         })
                         .done(() => {

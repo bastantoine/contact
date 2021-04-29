@@ -23,7 +23,7 @@ class WrongTypeException(Exception):
 
 class InvalidConfigException(Exception):
 
-    def __init__(self, field: Union[str, list], param: str, pattern: str, *args: object, **pattern_params: dict) -> None:
+    def __init__(self, field: Union[str, list], param: Union[str, list], pattern: str, *args: object, **pattern_params: dict) -> None:
         self.field = field
         self.param = param
         self.message = pattern.format(field=field, param=param, **pattern_params)
