@@ -38,3 +38,11 @@ div.field-configuration-form > * {
 .button-delete-field {
     width: 100%;
 }
+
+.toggle-field-display-value-true {
+    padding-right: 3px;
+}
+
+.toggle-field-display-value-false {
+    padding-left: 3px;
+}

@@ -175,6 +175,46 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                         <Form.Text muted>Enter the format of images that should be accepted, by separating them with a comma. Ex: 'png, jpg, jpeg'</Form.Text>
                     </Col>
                 </Form.Group> : <></>}
+                {typeHook === 'toggle' ? <Form.Group as={Row}>
+                    <Form.Label column xl={3}>
+                        Displayed values
+                    </Form.Label>
+                    <Col xl={9}>
+                        <Row>
+                            <Col xl={6} className="toggle-field-display-value-true">
+                                <Form.Control
+                                    type="text"
+                                    placeholder="True"
+                                    defaultValue={props.fieldConfig.additional_type_parameters ?
+                                                props.fieldConfig.additional_type_parameters.value_true :
+                                                undefined
+                                                }
+                                    onChange={props.onChange}
+                                    onBlur={props.onBlur}
+                                    name={`${props.fieldKey}-value_true`}
+                                    isInvalid={props.errorsFields.includes(`${props.fieldKey}-value_true`)}
+                                    required
+                                />
+                            </Col>
+                            <Col xl={6} className="toggle-field-display-value-false">
+                                <Form.Control
+                                    type="text"
+                                    placeholder="False"
+                                    defaultValue={props.fieldConfig.additional_type_parameters ?
+                                                props.fieldConfig.additional_type_parameters.value_false :
+                                                undefined
+                                                }
+                                    onChange={props.onChange}
+                                    onBlur={props.onBlur}
+                                    name={`${props.fieldKey}-value_false`}
+                                    isInvalid={props.errorsFields.includes(`${props.fieldKey}-value_false`)}
+                                    required
+                                />
+                            </Col>
+                        </Row>
+                        <Form.Text muted>Enter the values to use as display for the True and False states. Otherwise <i>'Yes'</i> and <i>'No'</i> will be used for True and False, respectively.</Form.Text>
+                    </Col>
+                </Form.Group> : <></>}
                 <Row>
                     <Col xl={12} style={{marginBottom: '16px'}}>
                         <ButtonGroup aria-label="Basic example" className="d-flex">
