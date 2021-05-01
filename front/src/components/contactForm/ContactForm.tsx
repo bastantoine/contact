@@ -114,7 +114,8 @@ class ContactForm extends Component<PropsType, StateType> {
                 initialValues={this.props.initial_value}
                 validationSchema={validationSchema}
                 onSubmit={(values, { setSubmitting, resetForm, setFieldError }) => {
-                    let firstNonEmptyValue = Object.values(values).find((v: string) => v !== '');
+                    // Make sure everything is a string
+                    let firstNonEmptyValue = Object.values(values).map(v => String(v)).find((v: string) => v !== '');
                     if (firstNonEmptyValue) {
                         // At least one value is not empty
                         this.setState({hasErrorInSubmit: false});

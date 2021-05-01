@@ -28,3 +28,7 @@ export function join(p: string, ...paths: string[]) {
 export function upperFirstLetter(input: string): string {
     return input ? input.charAt(0).toUpperCase() + input.slice(1) : input;
 }
+
+export function getValueForToggle(value: boolean, value_true: string|undefined, value_false: string|undefined): string {
+    return {value_true: value_true || 'Yes', value_false: value_false || 'No'}[value ? 'value_true' : 'value_false']
+}

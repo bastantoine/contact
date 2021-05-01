@@ -20,6 +20,8 @@ export type FieldConfigType = {
     additional_type_parameters?: {
         inner_type?: typeof LIST_ALLOWED_INNER_TYPES[number],
         accepted_types?: string[],
+        value_true?: string,
+        value_false?: string,
     },
     form_help_text?: string,
 }

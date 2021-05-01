@@ -1,7 +1,7 @@
-import React from "react";
-import { Col, Form, Row } from "react-bootstrap";
+import React, { useState } from "react";
+import { ButtonGroup, Col, Form, Row, ToggleButton } from "react-bootstrap";
 
-import { upperFirstLetter } from "../../utils";
+import { getValueForToggle, upperFirstLetter } from "../../utils";
 import { FieldConfigType } from "../Home";
 import { ALLOWED_TYPES, LIST_ALLOWED_INNER_TYPES } from "../TypeComponents";
 
@@ -58,12 +58,31 @@ function ContactFormField(props: PropsType & { children?: React.ReactNode}) {
         (additional_type_parameters && additional_type_parameters.inner_type) || ''
         );
     let help_text = props.attribute_config.form_help_text;
+    let _getValueForToggle = (value: boolean) => getValueForToggle(
+        value,
+        additional_type_parameters ? additional_type_parameters.value_true : undefined,
+        additional_type_parameters ? additional_type_parameters.value_false : undefined
+        )
+    const [checked, setChecked] = useState(props.value);
     return <Form.Group as={Row} controlId={`form-control-${props.attribute}`}>
         <Form.Label column sm={2}>
             <p className="text-right">{displayed_name}</p>
         </Form.Label>
         <Col sm={10}>
             {/* Setting 'undefined' as the attribute value allows to not set the attributes when the predicates evaluates to false */}
+            {props.attribute_config.type === 'toggle' ?
+            <ButtonGroup toggle>
+                <ToggleButton
+                    type="checkbox"
+                    value={_getValueForToggle(checked)}
+                    name={props.attribute}
+                    checked={checked}
+                    variant={checked ? "success" : "secondary"}
+                    onChange={(event) => {setChecked(event.currentTarget.checked); props.onChange(event)}}
+                    onBlur={props.onBlur}
+                    aria-describedby={help_text ? `help-text-form-add-${props.attribute}` : undefined}
+                >{_getValueForToggle(checked)}</ToggleButton>
+            </ButtonGroup> :
             <Form.Control
                 as={input_type === "textarea" ? "textarea" : undefined}
                 rows={input_type === "textarea" ? 3 : undefined}
@@ -76,7 +95,7 @@ function ContactFormField(props: PropsType & { children?: React.ReactNode}) {
                 aria-describedby={help_text ? `help-text-form-add-${props.attribute}` : undefined}
                 isValid={props.touched && !props.errors}
                 isInvalid={!!props.errors}
-            />
+            />}
             {/* Add helper text only if the config has one set */}
             {help_text ? <Form.Text id={`help-text-form-add-${props.attribute}`} muted>{help_text}</Form.Text> : <></>}
             {/* Add error message if needed */}

@@ -1,3 +1,5 @@
+import { getValueForToggle } from "../utils";
+
 type TypeComponentPropsType = {value: string, extra_params?: any}
 
 export function TextComponent(props: TypeComponentPropsType) {
@@ -51,10 +53,11 @@ export function EmailComponent(props: TypeComponentPropsType) {
 }
 
 export function ToggleComponent(props: {value: string, extra_params?: {value_true: string, value_false: string}}) {
-    let shown_values = (props.extra_params && props.extra_params.value_true !== '' && props.extra_params.value_false !== '') ?
-                       props.extra_params :
-                       {value_true: 'Yes', value_false: 'No'}
-    return <TextComponent value={shown_values[!!props.value ? 'value_true' : 'value_false']}></TextComponent>
+    return <TextComponent value={getValueForToggle(
+        Boolean(props.value),
+        props.extra_params ? props.extra_params.value_true : undefined,
+        props.extra_params ? props.extra_params.value_false : undefined
+    )}></TextComponent>
 }
 
 // Only used internally, note it does not include the binding for the list type.
