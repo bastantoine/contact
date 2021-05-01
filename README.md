@@ -22,6 +22,7 @@ A contact manager that uses a fully customizable set of fields.
       - [`long_str`](#long_str)
       - [`url`](#url)
       - [`email`](#email)
+      - [`toggle`](#toggle)
   - [Note on the addition of fields with a non-empty DB](#note-on-the-addition-of-fields-with-a-non-empty-db)
   - [CLI config validator](#cli-config-validator)
 
@@ -232,11 +233,11 @@ The sidebar would be rendered as:
 
 ##### `additional_type_parameters`
 
-*Required*: Required for `"type": "list"`, allowed but not required for `"type": "image"`
+*Required*: Required for `"type": "list"`, allowed but not required for `"type": "image"` and `"type": "toggle"`
 
 *Type*: key-value array
 
-*Description*: This parameter allow to specify a more precise type when using [`"type": "list"`](#list) or [`"type": "image"`](#image). See their respective type definition for the expected/allowed attributes.
+*Description*: This parameter allow to specify a more precise type when using [`"type": "list"`](#list), [`"type": "image"`](#image)or [`"type": "toggle"`](#toggle). See their respective type definition for the expected/allowed attributes.
 
 ##### `form_help_text`
 
@@ -346,6 +347,27 @@ For example:
 
 *Value displayed*: `<a href="mailto:{value}">{value}</a>`
 
+##### `toggle`
+
+*Form input associated*: `<input type="file">`
+
+*Value displayed*: `{value_true|'Yes'}` if toggled to True state, `{value_false|'No'}` otherwise
+
+*Notes*: It is possible to set custom values for the True and False states. These values will then be used for display purposes, as well as when creating/editing an instance. To do you simply have to set them in the attributes `value_true` and `value_false` of of `additional_type_parameters` of the field. For example:
+
+```json
+"is_alive": {
+    "type": "toggle",
+    "additional_type_parameters": {
+        "value_true": "Yep",
+        "value_false": "Nope"
+    }
+}
+```
+
+Note that you cannot set only one of them. Either set both or none of them.
+
+If custom values ar not set, *'Yes'* and *'No'* will be used as values for the True and False states.
 
 ### Note on the addition of fields with a non-empty DB
 

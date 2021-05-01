@@ -1,4 +1,6 @@
-export function TextComponent(props: {value: string, extra_params?: any}) {
+type TypeComponentPropsType = {value: string, extra_params?: any}
+
+export function TextComponent(props: TypeComponentPropsType) {
     return <>{props.value}</>
 }
 
@@ -23,7 +25,7 @@ export function ListComponent(props: {value: string[], extra_params: {inner_type
     return <></>
 }
 
-export function ImageComponent(props: {value: string, extra_params?: any}) {
+export function ImageComponent(props: TypeComponentPropsType) {
     return <img src={props.value} alt=""/>
 }
 
@@ -31,7 +33,7 @@ function BaseUrlComponent(props: {link: string, value: string}) {
     return <a href={props.link}>{props.value}</a>
 }
 
-export function UrlComponent(props: {value: string, extra_params?: any}) {
+export function UrlComponent(props: TypeComponentPropsType) {
 
     function stripHTTP(url: string): string {
         if (url.startsWith('https://'))
@@ -44,8 +46,15 @@ export function UrlComponent(props: {value: string, extra_params?: any}) {
     return <BaseUrlComponent link={props.value} value={stripHTTP(props.value)}></BaseUrlComponent>
 }
 
-export function EmailComponent(props: {value: string, extra_params?: any}) {
+export function EmailComponent(props: TypeComponentPropsType) {
     return <BaseUrlComponent link={`mailto:${props.value}`} value={props.value}></BaseUrlComponent>
+}
+
+export function ToggleComponent(props: {value: string, extra_params?: {value_true: string, value_false: string}}) {
+    let shown_values = (props.extra_params && props.extra_params.value_true !== '' && props.extra_params.value_false !== '') ?
+                       props.extra_params :
+                       {value_true: 'Yes', value_false: 'No'}
+    return <TextComponent value={shown_values[!!props.value ? 'value_true' : 'value_false']}></TextComponent>
 }
 
 // Only used internally, note it does not include the binding for the list type.
@@ -58,6 +67,7 @@ const _ATTRIBUTE_TYPE_COMPONENT_MAPPING = {
     long_str: TextComponent,
     url: UrlComponent,
     email: EmailComponent,
+    toggle: ToggleComponent,
 }
 
 

@@ -89,6 +89,18 @@ class Configuration extends Component<PropsType, StateType> {
                             fieldValues.additional_type_parameters = {accepted_types: fieldValues.accepted_types.split(',').map(((v: string) => v.trim()))};
                             delete fieldValues.accepted_types;
                         }
+                        if (fieldValues.type === 'toggle' && (fieldValues.value_true !== undefined || fieldValues.value_false !== undefined)) {
+                            // additional_type_parameters for type: toggle are
+                            // not mandatory, but here we got at least one of
+                            // them. So fill both of them, even one is empty and
+                            // let the server do the checking for us
+                            fieldValues.additional_type_parameters = {
+                                value_true: (fieldValues.value_true !== undefined ? fieldValues.value_true : fieldValues.additional_type_parameters.value_true || ''),
+                                value_false: (fieldValues.value_false !== undefined ? fieldValues.value_false : fieldValues.additional_type_parameters.value_false || '')
+                            };
+                            fieldValues.value_true !== undefined && delete fieldValues.value_true;
+                            fieldValues.value_false !== undefined && delete fieldValues.value_false;
+                        }
                         formattedConfig[fieldName] = fieldValues;
                     }
                     $.ajax({
@@ -101,7 +113,8 @@ class Configuration extends Component<PropsType, StateType> {
                             this.setState({error: error});
                             if (error.responseJSON) {
                                 let fields: string[] = Array.isArray(error.responseJSON.field) ? error.responseJSON.field : [error.responseJSON.field]
-                                setStatus({fieldsErrors: fields.map((field) => `${field}-${error.responseJSON.param}`)});
+                                let params: string[] = Array.isArray(error.responseJSON.param) ? error.responseJSON.param : [error.responseJSON.param]
+                                setStatus({fieldsErrors: fields.map((field) => params.map((param) => `${field}-${param}`)).flat()});
                             }
                         })
                         .done(() => {
