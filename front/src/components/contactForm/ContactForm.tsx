@@ -3,9 +3,8 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 import React, { Component } from "react";
 
-import { LIST_ALLOWED_INNER_TYPES, ALLOWED_TYPES } from "../TypeComponents";
-import { upperFirstLetter } from "../../utils";
 import { ConfigType } from "../Home";
+import ContactFormField from "./ContactFormField";
 
 type PropsType = {
     initial_value: {[k: string]: any},
@@ -29,30 +28,6 @@ class ContactForm extends Component<PropsType, StateType> {
         super(props);
         this.state = {
             hasErrorInSubmit: false
-        }
-    }
-
-    private findInputTypeFromAttributeType(
-        attribute_type: ALLOWED_TYPES,
-        // inner_type is used only when attribute_type is a list,
-        // in this case it is the type of the values inside the list
-        inner_type?: typeof LIST_ALLOWED_INNER_TYPES[number] | ''
-    ): string {
-        switch (attribute_type) {
-            case "image":
-                return "file";
-            case "list":
-                return this.findInputTypeFromAttributeType(inner_type!);
-            case "email":
-                return "email";
-            case "url":
-                return "url";
-            case "long_str":
-                return "textarea";
-            case "integer":
-                return "number"
-            default:
-                return "text";
         }
     }
 
@@ -199,41 +174,18 @@ class ContactForm extends Component<PropsType, StateType> {
                     <Form onSubmit={handleSubmit} noValidate>
                         {this.props.config.attributes.map((attribute: string) => {
                             if (attribute !== this.props.config.primary_key) {
-                                const config_attribute = this.props.config.raw_config[attribute];
-                                let has_display_name = config_attribute.display_name;
-                                let displayed_name = has_display_name ? config_attribute.display_name : upperFirstLetter(attribute);
-                                let input_type = this.findInputTypeFromAttributeType(
-                                    config_attribute.type,
-                                    (config_attribute.additional_type_parameters &&
-                                    config_attribute.additional_type_parameters.inner_type
-                                    ) || ''
-                                );
-                                let help_text = config_attribute.form_help_text;
-                                return <Form.Group as={Row} controlId={`form-control-${attribute}`} key={`form-input-add-contact-${attribute}`}>
-                                    <Form.Label column sm={2}>
-                                        <p className="text-right">{displayed_name}</p>
-                                    </Form.Label>
-                                    <Col sm={10}>
-                                        {/* Setting 'undefined' as the attribute value allows to not set the attributes when the predicates evaluates to false */}
-                                        <Form.Control
-                                            as={input_type === "textarea" ? "textarea" : undefined}
-                                            rows={input_type === "textarea" ? 3 : undefined}
-                                            type={input_type}
-                                            name={attribute}
-                                            onChange={input_type !== 'file' ? handleChange : (event: React.FormEvent<any>) => {this.props.fileInputChangeHandler(attribute, event.currentTarget.files[0]); handleChange(event)}}
-                                            onBlur={handleBlur}
-                                            value={input_type !== 'file' ? values[attribute] : undefined}
-                                            placeholder={displayed_name}
-                                            aria-describedby={help_text ? `help-text-form-add-${attribute}` : undefined}
-                                            isValid={touched[attribute] && !errors[attribute]}
-                                            isInvalid={!!errors[attribute]}
-                                        />
-                                        {/* Add helper text only if the config has one set */}
-                                        {help_text ? <Form.Text id={`help-text-form-add-${attribute}`} muted>{help_text}</Form.Text> : <></>}
-                                        {/* Add error message if needed */}
-                                        {!!errors[attribute] ? <Form.Control.Feedback type="invalid">{errors[attribute]}</Form.Control.Feedback> : <></>}
-                                    </Col>
-                                </Form.Group>
+                                return <ContactFormField
+                                    attribute_config={this.props.config.raw_config[attribute]}
+                                    attribute={attribute}
+                                    value={values[attribute]}
+                                    onBlur={handleBlur}
+                                    onChange={handleChange}
+                                    onFileInputChange={this.props.fileInputChangeHandler}
+                                    touched={touched[attribute]}
+                                    errors={errors[attribute]}
+                                    key={`form-input-add-contact-${attribute}`}
+                                >
+                                </ContactFormField>
                             }
                             return <React.Fragment key={`form-input-add-contact-${attribute}`}></React.Fragment>;
                         })}
