@@ -3,9 +3,9 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 import React, { Component } from "react";
 
-import { LIST_ALLOWED_INNER_TYPES, ALLOWED_TYPES } from "./TypeComponents";
-import { upperFirstLetter } from "../utils";
-import { ConfigType } from "./Home";
+import { LIST_ALLOWED_INNER_TYPES, ALLOWED_TYPES } from "../TypeComponents";
+import { upperFirstLetter } from "../../utils";
+import { ConfigType } from "../Home";
 
 type PropsType = {
     initial_value: {[k: string]: any},

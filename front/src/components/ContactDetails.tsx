@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Button, ButtonGroup, Tab } from "react-bootstrap";
 
 import { ATTRIBUTE_TYPE_COMPONENT_MAPPING, TextComponent } from "./TypeComponents";
-import ContactForm from "./ContactForm";
+import ContactForm from "./contactForm/ContactForm";
 import { upperFirstLetter } from "../utils";
 import { ConfigType } from "./Home";
 

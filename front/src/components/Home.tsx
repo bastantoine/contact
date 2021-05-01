@@ -4,7 +4,7 @@ import { Col, ListGroup, Row, Tab } from "react-bootstrap";
 
 import { API_ENDPOINT } from "../config";
 import { join } from "../utils";
-import ContactForm from "./ContactForm";
+import ContactForm from "./contactForm/ContactForm";
 import ContactDetails from "./ContactDetails";
 import Configuration from "./configuration/Configuration";
 import { ALLOWED_TYPES, FILE_FIELDS, LIST_ALLOWED_INNER_TYPES } from "./TypeComponents";
