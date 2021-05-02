@@ -205,6 +205,7 @@ FIELD_TYPE_MAPPING: Dict[str, 'FieldType'] = {
     'long_str': StrFieldType(),
     'url': StrFieldType(),
     'email': StrFieldType(),
+    'select': StrFieldType(),
 }
 TYPE_FIELD_MAPPING = {field.__class__: type_name for type_name, field in FIELD_TYPE_MAPPING.items()}
 FILE_FIELDS = [
@@ -331,6 +332,41 @@ def validate_config(config: dict):
                     'inner_type',
                     f'Found parameter {parameter_name} of "type": "list" with "inner_type": "list"'
                 )
+
+        if param_type == 'select':
+            # 'list' parameters must have a 'additional_type_parameters'
+            # attribute as an JSON object (ie. a python dict)
+            additional_params = params.get('additional_type_parameters')
+            if additional_params is None:
+                raise InvalidConfigException(
+                    parameter_name,
+                    'additional_type_parameters',
+                    MISSING_PARAMETER_FROM_FIELD_TEMPLATE+' of "type": "select"'
+                )
+            if not isinstance(additional_params, dict):
+                raise InvalidConfigException(
+                    parameter_name,
+                    'additional_type_parameters',
+                    INVALID_VALUE_OF_PARAMETER,
+                    value=additional_params
+                )
+            # Make sure 'allowed_values' is there and with a valid value
+            allowed_values = additional_params.get('allowed_values')
+            if not isinstance(allowed_values, list):
+                raise InvalidConfigException(
+                    parameter_name,
+                    'allowed_values',
+                    INVALID_VALUE_OF_PARAMETER,
+                    value=allowed_values
+                )
+            if any(not isinstance(value, str) for value in allowed_values):
+                if not isinstance(value, list):
+                    raise InvalidConfigException(
+                        parameter_name,
+                        'allowed_values',
+                        INVALID_VALUE_OF_PARAMETER,
+                        value=allowed_values
+                    )
 
         if param_type == 'image' and params.get('additional_type_parameters') is not None:
             # In case a field of type 'image' has a 'additional_type_parameters' attribute, check
