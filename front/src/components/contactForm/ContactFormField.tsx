@@ -83,6 +83,19 @@ function ContactFormField(props: PropsType & { children?: React.ReactNode}) {
                     aria-describedby={help_text ? `help-text-form-add-${props.attribute}` : undefined}
                 >{_getValueForToggle(checked)}</ToggleButton>
             </ButtonGroup> :
+            props.attribute_config.type === 'select' ?
+            <Form.Control
+                as="select"
+                defaultValue={props.value ? props.value : "Choose value..."}
+                onChange={props.onChange}
+                onBlur={props.onBlur}
+                name={props.attribute}
+                isValid={props.touched && !props.errors}
+                isInvalid={!!props.errors}
+            >
+                <option>Choose value...</option>
+                {additional_type_parameters?.allowed_values?.map((value) => <option key={value}>{value}</option>)}
+            </Form.Control> :
             <Form.Control
                 as={input_type === "textarea" ? "textarea" : undefined}
                 rows={input_type === "textarea" ? 3 : undefined}
