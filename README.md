@@ -23,6 +23,7 @@ A contact manager that uses a fully customizable set of fields.
       - [`url`](#url)
       - [`email`](#email)
       - [`toggle`](#toggle)
+      - [`select`](#select)
   - [Note on the addition of fields with a non-empty DB](#note-on-the-addition-of-fields-with-a-non-empty-db)
   - [CLI config validator](#cli-config-validator)
 
@@ -233,11 +234,16 @@ The sidebar would be rendered as:
 
 ##### `additional_type_parameters`
 
-*Required*: Required for `"type": "list"`, allowed but not required for `"type": "image"` and `"type": "toggle"`
+*Required*: Required for a few types, allowed but not required for some others. See the list below.
 
 *Type*: key-value array
 
-*Description*: This parameter allow to specify a more precise type when using [`"type": "list"`](#list), [`"type": "image"`](#image)or [`"type": "toggle"`](#toggle). See their respective type definition for the expected/allowed attributes.
+*Description*: This parameter allow to specify a more precise type when using some types listed below. See their respective type definition for the expected/allowed attributes.
+
+- [`"type": "list"`](#list): required
+- [`"type": "select"`](#list): required
+- [`"type": "image"`](#list): allowed
+- [`"type": "toggle"`](#list): allowed
 
 ##### `form_help_text`
 
@@ -368,6 +374,23 @@ For example:
 Note that you cannot set only one of them. Either set both or none of them.
 
 If custom values ar not set, *'Yes'* and *'No'* will be used as values for the True and False states.
+
+##### `select`
+
+*Form input associated*: `<select>[<option>{value}</option> for value in allowed_values]</select>`
+
+*Value displayed*: `{value_true|'Yes'}` if toggled to True state, `{value_false|'No'}` otherwise
+
+*Notes*: You need to specify the list of values that will be provided in the select. To provide them, set them as a list of strings of the attribute `allowed_values` of `additional_type_parameters` of the field. For example
+
+```json
+"team": {
+    "type": "select",
+    "additional_type_parameters": {
+        "allowed_values": ["Blue", "Red"]
+    }
+}
+```
 
 ### Note on the addition of fields with a non-empty DB
 
