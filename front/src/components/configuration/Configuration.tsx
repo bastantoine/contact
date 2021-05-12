@@ -5,7 +5,7 @@ import { Formik } from "formik";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 import { API_ENDPOINT } from "../../config";
-import { join } from "../../utils";
+import { getRandomString, join } from "../../utils";
 import { ConfigType } from "../Home";
 import ConfigurationField from "./ConfigurationField";
 
@@ -101,6 +101,39 @@ class Configuration extends Component<PropsType, StateType> {
                             fieldValues.value_true !== undefined && delete fieldValues.value_true;
                             fieldValues.value_false !== undefined && delete fieldValues.value_false;
                         }
+                        if (fieldValues.type === 'select') {
+                            // Values that shouldn't be included in the server config
+                            let deleted_values: string[] = []
+                            // Values that should be included in the server config
+                            let allowed_values: string[] = []
+                            for (let [key, value] of Object.entries(fieldValues)) {
+                                if (key.startsWith('allowed_values-') && key.endsWith('_deleted')) {
+                                    deleted_values.push(value);
+                                    delete fieldValues[key];
+                                }
+                            }
+                            for (let [key, value] of Object.entries(fieldValues)) {
+                                if (key.startsWith('allowed_values-')) {
+                                    if (!deleted_values.includes(key.replace(/^(allowed_values-)/, ''))) {
+                                        allowed_values.push(value);
+                                    }
+                                    delete fieldValues[key];
+                                }
+                            }
+                            if (!fieldValues.additional_type_parameters) fieldValues.additional_type_parameters = {};
+                            if (fieldValues.additional_type_parameters.allowed_values === undefined) {
+                                fieldValues.additional_type_parameters.allowed_values = [];
+                            } else {
+                                // There's already values saved in the server
+                                // config, filter them to remove the values that
+                                // the user now chose to remove
+                                fieldValues.additional_type_parameters.allowed_values = fieldValues.additional_type_parameters.allowed_values
+                                                                                            .filter((value: string) => !deleted_values.includes(value));
+                            }
+                            for (let value of allowed_values) {
+                                fieldValues.additional_type_parameters.allowed_values.push(value);
+                            }
+                        }
                         formattedConfig[fieldName] = fieldValues;
                     }
                     $.ajax({
@@ -132,7 +165,9 @@ class Configuration extends Component<PropsType, StateType> {
                 handleBlur,
                 values,
                 isSubmitting,
-                status}) => (
+                status,
+                setFieldValue,
+            }) => (
                 // We need the noValidate so that the browser will not try to
                 // valide the inputs and won't display any error message that
                 // would mess up with the validation we already have.
@@ -185,6 +220,7 @@ class Configuration extends Component<PropsType, StateType> {
                                                         fieldConfig={config}
                                                         deleteFieldHandler={(fieldKey: string) => this.setState({fields: this.state.fields.filter((k) => k !== fieldKey)})}
                                                         errorsFields={status && status.fieldsErrors ? status.fieldsErrors.filter((k: string) => k.startsWith(fieldKey)) : []}
+                                                        setFieldValue={setFieldValue}
                                                     ></ConfigurationField>
                                                 </div>
                                             )}
@@ -200,7 +236,7 @@ class Configuration extends Component<PropsType, StateType> {
                             let {fields, fields_keys_to_names} = this.state;
 
                             // Use a random string as the key, but keep a blank name
-                            let new_field_key = Math.random().toString(36).substring(7);
+                            let new_field_key = getRandomString();
                             fields.push(new_field_key);
                             fields_keys_to_names[new_field_key] = '';
                             this.setState({fields: fields, fields_keys_to_names: fields_keys_to_names});

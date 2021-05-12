@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Button, ButtonGroup, Col, Collapse, Form, Row } from "react-bootstrap";
+import { Button, ButtonGroup, Col, Collapse, Form, InputGroup, Row } from "react-bootstrap";
+import { getRandomString } from "../../utils";
 import { ATTRIBUTE_TYPE_COMPONENT_MAPPING, LIST_ALLOWED_INNER_TYPES } from "../TypeComponents";
 import './ConfigurationField.css'
 
@@ -15,6 +16,7 @@ type PropsType = {
         (e: React.FocusEvent<any>): void;
         <T = any>(fieldOrEvent: T): T extends string ? (e: any) => void : void;
     },
+    setFieldValue: (field: string, value: any) => void
     deleteFieldHandler: ((fieldKey: string) => void),
     errorsFields: string[],
 }
@@ -55,6 +57,22 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
     const [fieldNameHook, setFieldNameHook] = useState(props.fieldName);
     const [displayNameHook, setDisplayNameHook] = useState(props.fieldConfig.display_name);
     const [typeHook, setTypeHook] = useState(props.fieldConfig.type)
+
+    // Hook array used to store the list of allowed values in case of a select.
+    // In case a list is already provided, we transform it a bit, from a [value]
+    // list to a [key, value] list, where initially the key and value are the
+    // same. When the use wants to add new values in the form, we append to the
+    // list a tuple with random key and blank value. This way if the user wants
+    // to delete a entry with an empty value, we can filter on the keys, and not
+    // delete the other entries with empty values.
+    const [selectAllowedValuesHook, setSelectAllowedValuesHook] = useState<[string, string][]>(
+        props.fieldConfig.additional_type_parameters && props.fieldConfig.additional_type_parameters.allowed_values ?
+        props.fieldConfig.additional_type_parameters.allowed_values.map((val: string) => [val, val]) :
+        [[getRandomString(), '']]
+    );
+    // Hook array used to track which values of the allowed value in case of a
+    // select are not meant to be submitted and saved to the server config.
+    const [deletedSelectAllowedValuesHook, setDeletedSelectAllowedValuesHook] = useState<string[]>([]);
 
     return <>
         <div className={`field-configuration-form ${props.errorsFields.length > 0 ? "field-configuration-form-with-errors" : ''}`}>
@@ -215,6 +233,48 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                         <Form.Text muted>Enter the values to use as display for the True and False states. Otherwise <i>'Yes'</i> and <i>'No'</i> will be used for True and False, respectively.</Form.Text>
                     </Col>
                 </Form.Group> : <></>}
+                {typeHook === 'select' ? <Form.Group as={Row}>
+                    <Form.Label column xl={3}>
+                        Displayed values
+                    </Form.Label>
+                    <Col xl={9}>
+                        {selectAllowedValuesHook.map(([key, value]: [string, string]) => {
+                            let fieldName = `${props.fieldKey}-allowed_values-${key}`
+                            return <InputGroup style={{marginBottom: '5px'}} key={key} hidden={deletedSelectAllowedValuesHook.includes(key) ? true : undefined}>
+                                <Form.Control
+                                    type="text"
+                                    placeholder="Value"
+                                    defaultValue={value}
+                                    onChange={props.onChange}
+                                    onBlur={props.onBlur}
+                                    name={fieldName}
+                                    isInvalid={props.errorsFields.includes(`${props.fieldKey}-allowed_values`)}
+                                />
+                                <InputGroup.Append>
+                                    <Button
+                                        variant="danger"
+                                        onClick={() => {
+                                            setDeletedSelectAllowedValuesHook([...deletedSelectAllowedValuesHook, key]);
+                                            props.setFieldValue(`${fieldName}_deleted`, key)
+                                        }}
+                                    >X</Button>
+                                </InputGroup.Append>
+                            </InputGroup>
+                        })}
+                        <Form.Text muted>Enter the values that will be available in the select.</Form.Text>
+                        <Row>
+                            <Col xl={{offset: 8, span: 4}}>
+                                <Button
+                                    className="button-full-width"
+                                    // Use a random key, so that we can remove only this entry, even if the value is empty
+                                    onClick={() => setSelectAllowedValuesHook([...selectAllowedValuesHook, [getRandomString(), '']])}
+                                >
+                                    Add a value
+                                </Button>
+                            </Col>
+                        </Row>
+                    </Col>
+                </Form.Group> : <></>}
                 <Row>
                     <Col xl={12} style={{marginBottom: '16px'}}>
                         <ButtonGroup aria-label="Basic example" className="d-flex">
@@ -317,7 +377,7 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                     <Col xl={{offset: 9, span: 3}}>
                         <Button
                             variant="danger"
-                            className="button-delete-field"
+                            className="button-full-width"
                             onClick={() => props.deleteFieldHandler(props.fieldKey)}
                         >
                             Delete the field
