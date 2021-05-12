@@ -32,3 +32,7 @@ export function upperFirstLetter(input: string): string {
 export function getValueForToggle(value: boolean, value_true: string|undefined, value_false: string|undefined): string {
     return {value_true: value_true || 'Yes', value_false: value_false || 'No'}[value ? 'value_true' : 'value_false']
 }
+
+export function getRandomString() {
+    return Math.random().toString(36).substring(7)
+}

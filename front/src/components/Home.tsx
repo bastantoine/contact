@@ -22,6 +22,7 @@ export type FieldConfigType = {
         accepted_types?: string[],
         value_true?: string,
         value_false?: string,
+        allowed_values?: string[],
     },
     form_help_text?: string,
 }

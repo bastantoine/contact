@@ -71,6 +71,7 @@ const _ATTRIBUTE_TYPE_COMPONENT_MAPPING = {
     url: UrlComponent,
     email: EmailComponent,
     toggle: ToggleComponent,
+    select: TextComponent,
 }
 
 
