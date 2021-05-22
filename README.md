@@ -34,7 +34,10 @@ We offer a all-in-one Dockerfile that includes both the API and the front side t
 Note that as the container includes everything in it, the building stage is a bit different than a normal one. You will need to provide using a `build-arg` the hostname under which your app will be served, so that the front can be configured to properly communicate with the API:
 
 ```shell
-docker build -t contact --build-arg hostname="http://localhost:1337" .
+> docker build -f docker/single-image/Dockerfile \
+               -t contact \
+               --build-arg hostname="http://localhost:1337" \
+               .
 ```
 
 Note that the container exposes the ports 80 for HTTP and 443 for HTTPS, but if you decide to bind them to another port for use behind a reverse proxy for example, the hostname you'll provide for the build MUST include the binded port.

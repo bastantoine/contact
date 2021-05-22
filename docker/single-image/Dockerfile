@@ -71,11 +71,11 @@ RUN pip install -r ./api/requirements.txt \
 #####################
 #    Front stuff    #
 #####################
-COPY docker/install-nginx-alpine.sh /
+COPY docker/single-image/install-nginx-alpine.sh /
 RUN sh /install-nginx-alpine.sh
 
 RUN rm /etc/nginx/conf.d/default.conf
-COPY docker/nginx.conf /etc/nginx/conf.d
+COPY docker/single-image/nginx.conf /etc/nginx/conf.d
 # Disable deamon mode for nginx. Needed to run fine with supervisord
 # From https://serverfault.com/a/647398
 RUN echo -e "\ndaemon off;\n" >> /etc/nginx/nginx.conf
@@ -87,7 +87,7 @@ COPY --from=front-builder /usr/src/app/build/ ./front
 #####################
 RUN apk add --no-cache supervisor
 
-COPY docker/generate-supervisord-conf.sh .
+COPY docker/single-image/generate-supervisord-conf.sh .
 RUN chmod +x generate-supervisord-conf.sh
 # Generate the supervisord conf file. Must be run after installing gunicorn and
 # nginx, as we need to set the paths to both bins in the config file
