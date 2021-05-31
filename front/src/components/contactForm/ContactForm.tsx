@@ -5,6 +5,7 @@ import React, { Component } from "react";
 
 import { ConfigType } from "../Home";
 import ContactFormField from "./ContactFormField";
+import { APIError } from "../../utils";
 
 type PropsType = {
     initial_value: {[k: string]: any},
@@ -15,7 +16,7 @@ type PropsType = {
         raw_config: ConfigType,
     },
     fileInputChangeHandler: (attribute: string, file: File) => void,
-    submitHandler: (values: {}) => JQueryXHR,
+    submitHandler: (values: {}) => Promise<void>,
     submitButtonMessage: string
 }
 type StateType = {
@@ -132,7 +133,8 @@ class ContactForm extends Component<PropsType, StateType> {
                                 values[attribute] = !!values[attribute] // Make sure it's a boolean
                         }
                         this.props.submitHandler(values)
-                            .fail((error) => {
+                            .then(() => resetForm())
+                            .catch(async (error: APIError) => {
                                 // Make sure the arrays are transformed back to string
                                 // value, so that the client side validation will still
                                 // work on them
@@ -142,10 +144,11 @@ class ContactForm extends Component<PropsType, StateType> {
                                 }
                                 setSubmitting(false);
                                 this.setState({hasErrorInSubmit: true});
+                                let error_body = await error.response.json()
                                 let error_message: string;
-                                switch (error.responseJSON.code) {
+                                switch (error_body.code) {
                                     case "WRONG_TYPE":
-                                        error_message = `Wrong type of value. Expected ${error.responseJSON.expected_type}`;
+                                        error_message = `Wrong type of value. Expected ${error_body.expected_type}`;
                                         break;
                                     case "MISSING_VALUE_REQUIRED":
                                         error_message = "Missing required value";
@@ -154,9 +157,8 @@ class ContactForm extends Component<PropsType, StateType> {
                                         error_message = '';
                                         break;
                                 }
-                                setFieldError(error.responseJSON.field, error_message);
-                            })
-                            .done(() => resetForm());
+                                setFieldError(error_body.field, error_message);
+                            });
                     }
                 }}
                 enableReinitialize

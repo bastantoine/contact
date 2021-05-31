@@ -36,3 +36,60 @@ export function getValueForToggle(value: boolean, value_true: string|undefined, 
 export function getRandomString() {
     return Math.random().toString(36).substring(7)
 }
+
+export function fetchJsonOrThrow(input: RequestInfo, init?: RequestInit): Promise<any> {
+    return fetch(input, init)
+        .then(response => {
+            if (!response.ok) {
+                throw new APIError(response, `Error ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+}
+
+export class APIError extends Error {
+    response: Response
+    constructor(response: Response, ...params: any) {
+        super(...params);
+        if(Error.captureStackTrace) {
+            Error.captureStackTrace(this, APIError);
+        }
+        this.name = 'APIError';
+        this.response = response;
+    }
+}
+
+// Deep copy helper in vanilla TS. From https://stackoverflow.com/a/28152032/
+export function deepCopy<T extends Object>(obj: T): T {
+    var copy: any;
+
+    // Handle the 3 simple types, and null or undefined
+    if (null == obj || "object" != typeof obj) return obj;
+
+    // Handle Date
+    if (obj instanceof Date) {
+        copy = new Date();
+        copy.setTime(obj.getTime());
+        return copy;
+    }
+
+    // Handle Array
+    if (obj instanceof Array) {
+        copy = [];
+        for (var i = 0, len = obj.length; i < len; i++) {
+            copy[i] = deepCopy(obj[i]);
+        }
+        return copy;
+    }
+
+    // Handle Object
+    if (obj instanceof Object) {
+        copy = {};
+        for (var attr in obj) {
+            if (obj.hasOwnProperty(attr)) copy[attr] = deepCopy(obj[attr]);
+        }
+        return copy;
+    }
+
+    throw new Error("Unable to copy obj! Its type isn't supported.");
+}

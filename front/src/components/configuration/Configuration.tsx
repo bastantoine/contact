@@ -1,11 +1,10 @@
-import $ from 'jquery'
 import { Component } from "react";
 import { Alert, Button, ButtonGroup, Form } from "react-bootstrap";
 import { Formik } from "formik";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 import { API_ENDPOINT } from "../../config";
-import { getRandomString, join } from "../../utils";
+import { APIError, fetchJsonOrThrow, getRandomString, join } from "../../utils";
 import { ConfigType } from "../Home";
 import ConfigurationField from "./ConfigurationField";
 
@@ -22,7 +21,7 @@ type StateType = {
     form_config: {[k: string]: any},
     fields_keys_to_names: {[k: string]: string},
     fields: string[],
-    error: null | JQuery.jqXHR,
+    error: null | string,
     submitSucessfull: boolean,
 }
 
@@ -136,26 +135,26 @@ class Configuration extends Component<PropsType, StateType> {
                         }
                         formattedConfig[fieldName] = fieldValues;
                     }
-                    $.ajax({
-                        url: join(API_ENDPOINT, 'config'),
+                    fetchJsonOrThrow(join(API_ENDPOINT, 'config'), {
                         method: 'PUT',
-                        data: JSON.stringify(formattedConfig),
-                        contentType: 'application/json'
+                        body: JSON.stringify(formattedConfig),
+                        headers: {'Content-Type': 'application/json'},
                     })
-                        .fail((error) => {
-                            this.setState({error: error});
-                            if (error.responseJSON) {
-                                let fields: string[] = Array.isArray(error.responseJSON.field) ? error.responseJSON.field : [error.responseJSON.field]
-                                let params: string[] = Array.isArray(error.responseJSON.param) ? error.responseJSON.param : [error.responseJSON.param]
+                        .catch(async (error: APIError) => {
+                            const error_json_body = await error.response.json();
+                            this.setState({error: error_json_body.message || error.message});
+                            if (error_json_body) {
+                                let fields: string[] = Array.isArray(error_json_body.field) ? error_json_body.field : [error_json_body.field]
+                                let params: string[] = Array.isArray(error_json_body.param) ? error_json_body.param : [error_json_body.param]
                                 setStatus({fieldsErrors: fields.map((field) => params.map((param) => `${field}-${param}`)).flat()});
                             }
                         })
-                        .done(() => {
+                        .then(() => {
                             this.setState({submitSucessfull: true});
                             this.props.configUpdatedHandler(formattedConfig);
                             resetForm();
                         })
-                        .always(() => setSubmitting(false));
+                        .finally(() => setSubmitting(false));
                 }}
                 enableReinitialize
             >
@@ -249,8 +248,7 @@ class Configuration extends Component<PropsType, StateType> {
             {this.state.error || this.state.submitSucessfull ?
             <Alert variant={this.state.submitSucessfull ? "success" : "danger"} style={{marginTop: '16px'}}>
                 {this.state.submitSucessfull ? "Configuration sucessfully saved" : <></>}
-                {this.state.error ? "There has been an error while submitting the form. Please retry." : <></>}<br/>
-                {this.state.error && this.state.error.responseJSON ? this.state.error.responseJSON.message : ''}
+                {this.state.error ? this.state.error : "There has been an error while submitting the form. Please retry."}<br/>
             </Alert> : <></>}
         </>
     }

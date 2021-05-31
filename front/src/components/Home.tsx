@@ -1,9 +1,8 @@
-import $ from "jquery"
 import React, { Component } from "react";
 import { Col, ListGroup, Row, Tab } from "react-bootstrap";
 
 import { API_ENDPOINT } from "../config";
-import { join } from "../utils";
+import { fetchJsonOrThrow, join } from "../utils";
 import ContactForm from "./contactForm/ContactForm";
 import ContactDetails from "./ContactDetails";
 import Configuration from "./configuration/Configuration";
@@ -33,7 +32,7 @@ type PropsType = {}
 type StateType = {
     isLoaded: boolean,
     isConfigLoaded: boolean,
-    error: null | JQuery.jqXHR,
+    error: null | string,
     contacts: any[],
     files: {[k: string]: File},
     config: {
@@ -66,12 +65,12 @@ class Home extends Component<PropsType, StateType> {
     }
 
     loadConfig() {
-        return $.get(join(API_ENDPOINT, 'config'))
-            .done((config) => this.loadConfigFromJson(config))
-            .fail((error) => {
+        return fetchJsonOrThrow(join(API_ENDPOINT, 'config'))
+            .then((config) => this.loadConfigFromJson(config))
+            .catch((error: Error) => {
                 this.setState({
-                    error: error,
-                    isConfigLoaded: false
+                    error: error.message,
+                    isLoaded: false
                 });
             })
     }
@@ -120,19 +119,19 @@ class Home extends Component<PropsType, StateType> {
     }
 
     loadContacts() {
-        return $.get(join(API_ENDPOINT, 'contact'))
-            .done((contacts) => {
+        return fetchJsonOrThrow(join(API_ENDPOINT, 'contact'))
+            .then((contacts) => {
                 this.setState({
                     contacts: contacts,
                     isLoaded: true
                 });
             })
-            .fail((error) => {
+            .catch((error: Error) => {
                 this.setState({
-                    error: error,
+                    error: error.message,
                     isLoaded: false
                 });
-            });
+            })
     }
 
     sortContacts() {
@@ -151,7 +150,7 @@ class Home extends Component<PropsType, StateType> {
         // Load the config and the contacts, and then sort them. We need to do
         // the sort after both calls are done, because we need the config to
         // sort the list of contacts.
-        $.when(this.loadConfig(), this.loadContacts()).done(() => this.sortContacts());
+        Promise.all([this.loadConfig(), this.loadContacts()]).then(() => this.sortContacts());
     }
 
     private prepare_file_fields(values: {[k: string]: any}) {
@@ -177,71 +176,11 @@ class Home extends Component<PropsType, StateType> {
         for (let [field, file] of Object.entries(this.state.files)){
             files.append(field, file);
         }
-        $.ajax({
-            url: join(API_ENDPOINT, 'contact', String(id), 'files'),
+        fetchJsonOrThrow(join(API_ENDPOINT, 'contact', String(id), 'files'), {
             method: method,
-            processData: false,
-            contentType: false,
-            data: files,
-        }).done((data) => {
-            let new_contacts = this.state.contacts
-                .slice()
-                .filter(contact => contact[this.state.config.primary_key] !== id);
-            new_contacts.push(data);
-            this.setState({
-                contacts: new_contacts,
-            });
-            this.sortContacts();
-        }).fail((_, textStatus) => console.error(textStatus))
-          .always(() => this.setState({files: {}}));
-    }
-
-    private deleteContact(id: string|number) {
-        $.ajax({
-            url: join(API_ENDPOINT, 'contact', String(id)),
-            method: 'DELETE'
-        }).done(() => {
-            let filtered_contacts = this.state.contacts.filter((contact) => {
-                return contact[this.state.config.primary_key] !== id
-            })
-            this.setState({contacts: filtered_contacts})
+            body: files,
         })
-    }
-
-    private addContact(values: {[k: string]: any}) {
-        values = this.prepare_file_fields(values);
-        return $.post({
-            url: join(API_ENDPOINT, 'contact'),
-            data: JSON.stringify(values),
-            contentType: 'application/json',
-        }).done((data) => {
-            if (Object.keys(this.state.files).length > 0) {
-                this.uploadFilesToContact(data[this.state.config.primary_key], 'POST')
-            } else {
-                let new_contacts = this.state.contacts.slice();
-                new_contacts.push(data);
-                this.setState({
-                    contacts: new_contacts,
-                });
-                this.sortContacts();
-            }
-        }).fail((_, textStatus) => console.error(textStatus));
-    }
-
-    private editContact(id: string|number, values: {[k: string]: any}) {
-        function removeEmpty(obj: {}): {} {
-            return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v != null));
-        }
-        values = this.prepare_file_fields(values);
-        return $.ajax({
-            url: join(API_ENDPOINT, 'contact', String(id)),
-            method: 'PUT',
-            data: JSON.stringify(removeEmpty(values)),
-            contentType: 'application/json'
-        }).done((data) => {
-            if (Object.keys(this.state.files).length > 0) {
-                this.uploadFilesToContact(data[this.state.config.primary_key], 'PUT')
-            } else {
+            .then((data) => {
                 let new_contacts = this.state.contacts
                     .slice()
                     .filter(contact => contact[this.state.config.primary_key] !== id);
@@ -250,8 +189,73 @@ class Home extends Component<PropsType, StateType> {
                     contacts: new_contacts,
                 });
                 this.sortContacts();
+            })
+            .finally(() => this.setState({files: {}}));
+    }
+
+    private deleteContact(id: string|number) {
+        fetchJsonOrThrow(join(API_ENDPOINT, 'contact', String(id)), {
+            method: 'DELETE'
+        })
+            .then(() => {
+                let filtered_contacts = this.state.contacts.filter((contact) => {
+                    return contact[this.state.config.primary_key] !== id
+                })
+                this.setState({contacts: filtered_contacts})
+            });
+    }
+
+    private addContact(values: {[k: string]: any}) {
+        values = this.prepare_file_fields(values);
+        return fetchJsonOrThrow(join(API_ENDPOINT, 'contact'), {
+            method: 'POST',
+            body: JSON.stringify(values),
+            headers: {
+                'Content-Type': 'application/json'
             }
-        }).fail((_, textStatus) => console.error(textStatus));
+        })
+            // Don't handle errors here, we'll do it when we call the handler
+            .then((data) => {
+                if (Object.keys(this.state.files).length > 0) {
+                    this.uploadFilesToContact(data[this.state.config.primary_key], 'POST')
+                } else {
+                    let new_contacts = this.state.contacts.slice();
+                    new_contacts.push(data);
+                    this.setState({
+                        contacts: new_contacts,
+                    });
+                    this.sortContacts();
+                }
+            });
+    }
+
+    private editContact(id: string|number, values: {[k: string]: any}) {
+        function removeEmpty(obj: {}): {} {
+            return Object.fromEntries(Object.entries(obj).filter(([_, v]) => v != null));
+        }
+        values = this.prepare_file_fields(values);
+        return fetchJsonOrThrow(join(API_ENDPOINT, 'contact', String(id)), {
+            method: 'PUT',
+            body: JSON.stringify(removeEmpty(values)),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            // Don't handle errors here, we'll do it when we call the handler
+            .then((data) => {
+                if (Object.keys(this.state.files).length > 0) {
+                    this.uploadFilesToContact(data[this.state.config.primary_key], 'PUT')
+                } else {
+                    let new_contacts = this.state.contacts
+                    .slice()
+                    .filter(contact => contact[this.state.config.primary_key] !== id);
+                    new_contacts.push(data);
+                    this.setState({
+                        contacts: new_contacts,
+                    });
+                    this.sortContacts();
+                }
+            });
     }
 
     renderDisplayedListTitle(contact: any, attributes: string[]) {
@@ -342,7 +346,7 @@ class Home extends Component<PropsType, StateType> {
             <Tab.Pane eventKey="#configuration">
                 <Configuration
                 config={this.state.config}
-                configUpdatedHandler={(config) => {$.when(this.loadConfigFromJson(config)).done(() => this.sortContacts())}}
+                configUpdatedHandler={(config) => {Promise.all([this.loadConfigFromJson(config)]).then(() => this.sortContacts())}}
             ></Configuration>
             </Tab.Pane>
         </Tab.Content>
@@ -350,7 +354,7 @@ class Home extends Component<PropsType, StateType> {
 
     render() {
         if (this.state.error) {
-            return <div>Erreur {this.state.error.status} : {this.state.error.responseText}</div>
+            return <div>{this.state.error}</div>
         } else if (!this.state.isLoaded && !this.state.isConfigLoaded) {
             return <div>Chargement...</div>
         } else {

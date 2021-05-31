@@ -1,10 +1,9 @@
-import $ from "jquery"
 import React, { useState } from "react";
 import { Button, ButtonGroup, Tab } from "react-bootstrap";
 
 import { ATTRIBUTE_TYPE_COMPONENT_MAPPING, TextComponent } from "./TypeComponents";
 import ContactForm from "./contactForm/ContactForm";
-import { upperFirstLetter } from "../utils";
+import { deepCopy, upperFirstLetter } from "../utils";
 import { ConfigType } from "./Home";
 
 type PropsType = {
@@ -16,7 +15,7 @@ type PropsType = {
         raw_config: ConfigType,
     },
     fileInputChangeHandler: (attribute: string, file: File) => void,
-    editContactHandler: (id: string|number, values: {}) => JQueryXHR,
+    editContactHandler: (id: string|number, values: {}) => Promise<void>,
     deleteContactHandler: (id: string|number) => void
 }
 
@@ -49,14 +48,13 @@ function ContactDetails(props: PropsType & { children?: React.ReactNode}) {
                 Delete
             </Button>
         </ButtonGroup>
-        {/* $.extend(true, {}, contact) allows to pass a deep copy of
-            contact. This way, every change made to the values won't
-            be reflect in the original object. Usefull since we
-            transform each lists by joining their values with a comma
-            to show them correctly in the input, but still need
-            the lists almost everywhere else. */}
+        {/* Pass a deep copy of the instance of contact. This way, every
+            change made to the values won't be reflect in the original object.
+            Usefull since we transform each lists by joining their values with a
+            comma to show them correctly in the input, but still need the lists
+            almost everywhere else. */}
         {isFormDisplayed ? <ContactForm
-            initial_value={$.extend(true, {}, props.contact)}
+            initial_value={deepCopy(props.contact)}
             config={props.config}
             fileInputChangeHandler={props.fileInputChangeHandler}
             submitHandler={((values: {}) => {
