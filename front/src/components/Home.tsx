@@ -283,6 +283,11 @@ class Home extends Component<PropsType, StateType> {
             });
     }
 
+    configUpdatedHandler(config: {[k: string]: any}) {
+        Promise.all([this.loadConfigFromJson(config)])
+            .then(() => this.sortContacts())
+    }
+
     renderDisplayedListTitle(contact: any, attributes: string[]) {
         let values: string[] = []
         for (let attribute of attributes)
@@ -345,8 +350,8 @@ class Home extends Component<PropsType, StateType> {
         this.editContact = this.editContact.bind(this);
         this.deleteContact = this.deleteContact.bind(this);
         this.addUploadedFile = this.addUploadedFile.bind(this);
-        this.loadConfigFromJson = this.loadConfigFromJson.bind(this);
         this.sortContacts = this.sortContacts.bind(this);
+        this.configUpdatedHandler = this.configUpdatedHandler.bind(this);
         return <Tab.Content>
             {this.state.contacts.map(contact => {
                 return <ContactDetails
@@ -371,7 +376,7 @@ class Home extends Component<PropsType, StateType> {
             <Tab.Pane eventKey="#configuration">
                 <Configuration
                 config={this.state.config}
-                configUpdatedHandler={(config) => {Promise.all([this.loadConfigFromJson(config)]).then(() => this.sortContacts())}}
+                configUpdatedHandler={this.configUpdatedHandler}
             ></Configuration>
             </Tab.Pane>
         </Tab.Content>
@@ -383,7 +388,7 @@ class Home extends Component<PropsType, StateType> {
         } else if (!this.state.isLoaded && !this.state.isConfigLoaded) {
             return <div>Chargement...</div>
         } else if (this.state.isConfigEmpty) {
-            return <ConfigurationOnboarding></ConfigurationOnboarding>
+            return <ConfigurationOnboarding configUpdatedHandler={this.configUpdatedHandler}></ConfigurationOnboarding>
         } else {
             return <Row>
                 <Col lg={12}>
