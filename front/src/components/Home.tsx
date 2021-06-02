@@ -7,6 +7,7 @@ import ContactForm from "./contactForm/ContactForm";
 import ContactDetails from "./ContactDetails";
 import Configuration from "./configuration/Configuration";
 import { ALLOWED_TYPES, FILE_FIELDS, LIST_ALLOWED_INNER_TYPES } from "./TypeComponents";
+import ConfigurationOnboarding from "./configuration/ConfigurationOnboarding";
 
 
 export type FieldConfigType = {
@@ -32,6 +33,7 @@ type PropsType = {}
 type StateType = {
     isLoaded: boolean,
     isConfigLoaded: boolean,
+    isConfigEmpty: boolean,
     error: null | string,
     contacts: any[],
     files: {[k: string]: File},
@@ -51,6 +53,7 @@ class Home extends Component<PropsType, StateType> {
         this.state = {
             isLoaded: false,
             isConfigLoaded: false,
+            isConfigEmpty: false,
             error: null,
             contacts: [],
             files: {},
@@ -76,46 +79,66 @@ class Home extends Component<PropsType, StateType> {
     }
 
     loadConfigFromJson(config: {[k: string]: any}) {
-        let attributes: string[] = [];
-        let main_attributes: [number, string][] = [];
-        let sort_keys: [number, string][] = [];
-        let primary_key = '';
-        for (let key in config) {
-            attributes.push(key);
-            if (config[key].main_attribute !== undefined) {
-                // This key is marked as a main attribute, which means
-                // we'll use it on the list display. It's value is the
-                // place it's supposed to have in the display, lower
-                // first, higher last.
-                main_attributes.push([config[key].main_attribute, key])
+        // Check if the config is empty. From
+        // https://stackoverflow.com/a/32108184
+        if (config &&
+            Object.keys(config).length === 0 &&
+            config.constructor === Object
+            ) {
+            this.setState({
+                config: {
+                    main_attributes: [],
+                    sort_keys: [],
+                    attributes: [],
+                    primary_key: '',
+                    raw_config: config,
+                },
+                isConfigLoaded: true,
+                isConfigEmpty: true,
+            })
+        } else {
+            let attributes: string[] = [];
+            let main_attributes: [number, string][] = [];
+            let sort_keys: [number, string][] = [];
+            let primary_key = '';
+            for (let key in config) {
+                attributes.push(key);
+                if (config[key].main_attribute !== undefined) {
+                    // This key is marked as a main attribute, which means
+                    // we'll use it on the list display. It's value is the
+                    // place it's supposed to have in the display, lower
+                    // first, higher last.
+                    main_attributes.push([config[key].main_attribute, key])
+                }
+                if (config[key].sort_key !== undefined) {
+                    // This key is marked as a sorting key, which means
+                    // we'll use it on the to sort the list of contacts.
+                    // It's value is the place it's supposed to have in the
+                    // sorting process, lower first, higher last.
+                    sort_keys.push([config[key].sort_key, key])
+                }
+                if (config[key].primary_key !== undefined && config[key].primary_key === true) {
+                    // This is key is marked as the primary key, which means
+                    // we can use it to uniquely identify a contact and use
+                    // to perfom PUT and DELETE on the API.
+                    primary_key = key;
+                }
             }
-            if (config[key].sort_key !== undefined) {
-                // This key is marked as a sorting key, which means
-                // we'll use it on the to sort the list of contacts.
-                // It's value is the place it's supposed to have in the
-                // sorting process, lower first, higher last.
-                sort_keys.push([config[key].sort_key, key])
-            }
-            if (config[key].primary_key !== undefined && config[key].primary_key === true) {
-                // This is key is marked as the primary key, which means
-                // we can use it to uniquely identify a contact and use
-                // to perfom PUT and DELETE on the API.
-                primary_key = key;
-            }
+            this.setState({
+                config: {
+                    // Sort the main attributes by their value, to respect
+                    // the order the user wanted, and then get only the key
+                    main_attributes: main_attributes.sort((a, b) => a[0] - b[0]).map((item) => item[1]),
+                    // Same thing for the sorting keys
+                    sort_keys: sort_keys.sort((a, b) => a[0] - b[0]).map((item) => item[1]),
+                    attributes: attributes,
+                    primary_key: primary_key,
+                    raw_config: config,
+                },
+                isConfigLoaded: true,
+                isConfigEmpty: false,
+            });
         }
-        this.setState({
-            config: {
-                // Sort the main attributes by their value, to respect
-                // the order the user wanted, and then get only the key
-                main_attributes: main_attributes.sort((a, b) => a[0] - b[0]).map((item) => item[1]),
-                // Same thing for the sorting keys
-                sort_keys: sort_keys.sort((a, b) => a[0] - b[0]).map((item) => item[1]),
-                attributes: attributes,
-                primary_key: primary_key,
-                raw_config: config,
-            },
-            isConfigLoaded: true
-        });
     }
 
     loadContacts() {
@@ -135,15 +158,17 @@ class Home extends Component<PropsType, StateType> {
     }
 
     sortContacts() {
-        let listContacts = this.state.contacts.slice();
-        listContacts.sort((c1, c2) => {
-            for (let sort_key of this.state.config.sort_keys) {
-                if (c1[sort_key] < c2[sort_key]) return -1;
-	            if (c1[sort_key] > c2[sort_key]) return 1;
-            }
-            return 0
-        });
-        this.setState({contacts: listContacts});
+        if (!this.state.isConfigEmpty) {
+            let listContacts = this.state.contacts.slice();
+            listContacts.sort((c1, c2) => {
+                for (let sort_key of this.state.config.sort_keys) {
+                    if (c1[sort_key] < c2[sort_key]) return -1;
+                    if (c1[sort_key] > c2[sort_key]) return 1;
+                }
+                return 0
+            });
+            this.setState({contacts: listContacts});
+        }
     }
 
     componentDidMount() {
@@ -357,6 +382,8 @@ class Home extends Component<PropsType, StateType> {
             return <div>{this.state.error}</div>
         } else if (!this.state.isLoaded && !this.state.isConfigLoaded) {
             return <div>Chargement...</div>
+        } else if (this.state.isConfigEmpty) {
+            return <ConfigurationOnboarding></ConfigurationOnboarding>
         } else {
             return <Row>
                 <Col lg={12}>
