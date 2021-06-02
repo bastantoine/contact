@@ -91,7 +91,8 @@ def contacts_file_post_put(id_contact: int):
 @api.route('/config', methods=['GET', 'PUT'])
 def config_get():
     if request.method == 'GET':
-        return send_from_directory('.', os.environ.get('CONFIG_FILE', 'config.json'))
+        filename = os.path.join('.', os.environ.get('CONFIG_FILE', 'config.json'))
+        return send_from_directory('.', filename) if os.path.isfile(filename) else jsonify()
 
     if not request.json:
         abort(400, 'Missing data')

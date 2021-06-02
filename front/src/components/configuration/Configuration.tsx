@@ -4,7 +4,7 @@ import { Formik } from "formik";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 import { API_ENDPOINT } from "../../config";
-import { APIError, fetchJsonOrThrow, getRandomString, join } from "../../utils";
+import { APIError, fetchOrThrow, getRandomString, join } from "../../utils";
 import { ConfigType } from "../Home";
 import ConfigurationField from "./ConfigurationField";
 
@@ -22,7 +22,7 @@ type StateType = {
     fields_keys_to_names: {[k: string]: string},
     fields: string[],
     error: null | string,
-    submitSucessfull: boolean,
+    submitSucessfull: null | boolean,
 }
 
 class Configuration extends Component<PropsType, StateType> {
@@ -41,7 +41,7 @@ class Configuration extends Component<PropsType, StateType> {
         }
         this.state = {
             error: null,
-            submitSucessfull: false,
+            submitSucessfull: null,
             form_config: form_config,
             // Mapping of the field keys and field names. The field key is used
             // only internally by react, while the field name is the name used
@@ -135,14 +135,17 @@ class Configuration extends Component<PropsType, StateType> {
                         }
                         formattedConfig[fieldName] = fieldValues;
                     }
-                    fetchJsonOrThrow(join(API_ENDPOINT, 'config'), {
+                    fetchOrThrow(join(API_ENDPOINT, 'config'), {
                         method: 'PUT',
                         body: JSON.stringify(formattedConfig),
                         headers: {'Content-Type': 'application/json'},
                     })
                         .catch(async (error: APIError) => {
                             const error_json_body = await error.response.json();
-                            this.setState({error: error_json_body.message || error.message});
+                            this.setState({
+                                submitSucessfull: false,
+                                error: error_json_body.message || error.message,
+                            });
                             if (error_json_body) {
                                 let fields: string[] = Array.isArray(error_json_body.field) ? error_json_body.field : [error_json_body.field]
                                 let params: string[] = Array.isArray(error_json_body.param) ? error_json_body.param : [error_json_body.param]
@@ -150,7 +153,7 @@ class Configuration extends Component<PropsType, StateType> {
                             }
                         })
                         .then(() => {
-                            this.setState({submitSucessfull: true});
+                            this.setState({submitSucessfull: true, error: null});
                             this.props.configUpdatedHandler(formattedConfig);
                             resetForm();
                         })
@@ -245,11 +248,14 @@ class Configuration extends Component<PropsType, StateType> {
                 </Form>
             )}
             </Formik>
-            {this.state.error || this.state.submitSucessfull ?
-            <Alert variant={this.state.submitSucessfull ? "success" : "danger"} style={{marginTop: '16px'}}>
-                {this.state.submitSucessfull ? "Configuration sucessfully saved" : <></>}
-                {this.state.error ? this.state.error : "There has been an error while submitting the form. Please retry."}<br/>
-            </Alert> : <></>}
+            {this.state.submitSucessfull !== null ?
+                this.state.submitSucessfull ?
+                    <Alert variant="success" style={{marginTop: '16px'}}>Configuration sucessfully saved</Alert>
+                :
+                    <Alert variant="danger" style={{marginTop: '16px'}}>
+                        {this.state.error ? this.state.error : "There has been an error while submitting the form. Please retry."}<br/>
+                    </Alert>
+            : <></>}
         </>
     }
 
