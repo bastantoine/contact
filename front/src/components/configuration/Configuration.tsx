@@ -4,7 +4,7 @@ import { Formik } from "formik";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 import { API_ENDPOINT } from "../../config";
-import { APIError, fetchJsonOrThrow, getRandomString, join } from "../../utils";
+import { APIError, fetchOrThrow, getRandomString, join } from "../../utils";
 import { ConfigType } from "../Home";
 import ConfigurationField from "./ConfigurationField";
 
@@ -135,7 +135,7 @@ class Configuration extends Component<PropsType, StateType> {
                         }
                         formattedConfig[fieldName] = fieldValues;
                     }
-                    fetchJsonOrThrow(join(API_ENDPOINT, 'config'), {
+                    fetchOrThrow(join(API_ENDPOINT, 'config'), {
                         method: 'PUT',
                         body: JSON.stringify(formattedConfig),
                         headers: {'Content-Type': 'application/json'},

@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { Col, ListGroup, Row, Tab } from "react-bootstrap";
 
 import { API_ENDPOINT } from "../config";
-import { fetchJsonOrThrow, join } from "../utils";
+import { fetchOrThrow, fetchJsonOrThrow, join } from "../utils";
 import ContactForm from "./contactForm/ContactForm";
 import ContactDetails from "./ContactDetails";
 import Configuration from "./configuration/Configuration";
@@ -219,7 +219,7 @@ class Home extends Component<PropsType, StateType> {
     }
 
     private deleteContact(id: string|number) {
-        fetchJsonOrThrow(join(API_ENDPOINT, 'contact', String(id)), {
+        fetchOrThrow(join(API_ENDPOINT, 'contact', String(id)), {
             method: 'DELETE'
         })
             .then(() => {

@@ -37,6 +37,16 @@ export function getRandomString() {
     return Math.random().toString(36).substring(7)
 }
 
+export function fetchOrThrow(input: RequestInfo, init?: RequestInit): Promise<any> {
+    return fetch(input, init)
+        .then(response => {
+            if (!response.ok) {
+                throw new APIError(response, `Error ${response.status}: ${response.statusText}`);
+            }
+            return response;
+        })
+}
+
 export function fetchJsonOrThrow(input: RequestInfo, init?: RequestInit): Promise<any> {
     return fetch(input, init)
         .then(response => {
