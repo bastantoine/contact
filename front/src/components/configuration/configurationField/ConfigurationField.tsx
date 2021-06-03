@@ -16,6 +16,9 @@ import {
 import ConfigurationFieldElement from "./ConfigurationFieldElement";
 import "./ConfigurationField.css";
 
+// Disable the warning about the use of 'any' instead of a more specific type,
+// because either we cannot do it more precisely, or there's not easy way (yet?)
+// to do it.
 type PropsType = {
     fieldKey: string;
     fieldName: string;
@@ -56,7 +59,9 @@ function getFieldTitle(fieldName: string, displayName: string): JSX.Element {
 
 // We have to add the property children, otherwise we have an error "Property
 // 'children' does not exist on type 'IntrinsicAttributes & PropsType'"
-function ConfigurationField(props: PropsType & {children?: React.ReactNode}) {
+function ConfigurationField(
+    props: PropsType & {children?: React.ReactNode}
+): JSX.Element {
     const [isButtonDisplayedNameDisplayed, setIsButtonDisplayedNameDisplayed] =
         useState(
             props.fieldConfig.display_name !== undefined ||
@@ -312,12 +317,14 @@ function ConfigurationField(props: PropsType & {children?: React.ReactNode}) {
                                             />
                                         </Col>
                                     </Row>
+                                    {/* eslint-disable react/no-unescaped-entities */}
                                     <Form.Text muted>
                                         Enter the values to use as display for
                                         the True and False states. Otherwise{" "}
                                         <i>'Yes'</i> and <i>'No'</i> will be
                                         used for True and False, respectively.
                                     </Form.Text>
+                                    {/* eslint-enable react/no-unescaped-entities */}
                                 </Col>
                             </Form.Group>
                         ) : (
@@ -331,7 +338,7 @@ function ConfigurationField(props: PropsType & {children?: React.ReactNode}) {
                                 <Col xl={9}>
                                     {selectAllowedValuesHook.map(
                                         ([key, value]: [string, string]) => {
-                                            let fieldName = `${props.fieldKey}-allowed_values-${key}`;
+                                            const fieldName = `${props.fieldKey}-allowed_values-${key}`;
                                             return (
                                                 <InputGroup
                                                     style={{
