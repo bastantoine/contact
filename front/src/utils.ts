@@ -10,10 +10,10 @@
  * @param paths List of paths to append one after the other
  * @returns All the single paths appended together with a '/' between each
  */
-export function join(p: string, ...paths: string[]) {
-    let sep = "/";
+export function join(p: string, ...paths: string[]): string {
+    const sep = "/";
     let output = p;
-    for (let path of paths) {
+    for (const path of paths) {
         if (path !== sep) {
             if (path.startsWith(sep)) {
                 output += path;
@@ -39,7 +39,7 @@ export function getValueForToggle(
     ];
 }
 
-export function getRandomString() {
+export function getRandomString(): string {
     return Math.random().toString(36).substring(7);
 }
 
@@ -75,7 +75,7 @@ export function fetchJsonOrThrow(
 
 export class APIError extends Error {
     response: Response;
-    constructor(response: Response, ...params: any) {
+    constructor(response: Response, ...params: any[]) {
         super(...params);
         if (Error.captureStackTrace) {
             Error.captureStackTrace(this, APIError);
@@ -86,8 +86,9 @@ export class APIError extends Error {
 }
 
 // Deep copy helper in vanilla TS. From https://stackoverflow.com/a/28152032/
+// eslint-disable-next-line @typescript-eslint/ban-types
 export function deepCopy<T extends Object>(obj: T): T {
-    var copy: any;
+    let copy: any;
 
     // Handle the 3 simple types, and null or undefined
     if (null == obj || "object" != typeof obj) return obj;
@@ -102,7 +103,7 @@ export function deepCopy<T extends Object>(obj: T): T {
     // Handle Array
     if (obj instanceof Array) {
         copy = [];
-        for (var i = 0, len = obj.length; i < len; i++) {
+        for (let i = 0, len = obj.length; i < len; i++) {
             copy[i] = deepCopy(obj[i]);
         }
         return copy;
@@ -111,7 +112,8 @@ export function deepCopy<T extends Object>(obj: T): T {
     // Handle Object
     if (obj instanceof Object) {
         copy = {};
-        for (var attr in obj) {
+        for (const attr in obj) {
+            // eslint-disable-next-line no-prototype-builtins
             if (obj.hasOwnProperty(attr)) copy[attr] = deepCopy(obj[attr]);
         }
         return copy;

@@ -35,7 +35,7 @@ type PropsType = {
     formText?: string;
 } & React.ComponentProps<typeof Form.Control>;
 
-function Name(props: PropsType & {children?: React.ReactNode}) {
+function Name(props: PropsType & {children?: React.ReactNode}): JSX.Element {
     return (
         <BaseConfigurationFieldElement
             label="Name"
@@ -51,7 +51,7 @@ function Name(props: PropsType & {children?: React.ReactNode}) {
     );
 }
 
-function Type(props: PropsType & {children?: React.ReactNode}) {
+function Type(props: PropsType & {children?: React.ReactNode}): JSX.Element {
     return (
         <BaseConfigurationFieldElement
             label="Type"
@@ -61,13 +61,16 @@ function Type(props: PropsType & {children?: React.ReactNode}) {
             onBlur={props.onBlur}
             name={`${props.fieldKey}-type`}
             isInvalid={props.isInvalid}
-            children={props.children}
             required
-        />
+        >
+            {props.children}
+        </BaseConfigurationFieldElement>
     );
 }
 
-function InnerType(props: PropsType & {children?: React.ReactNode}) {
+function InnerType(
+    props: PropsType & {children?: React.ReactNode}
+): JSX.Element {
     return (
         <BaseConfigurationFieldElement
             label="Inner type"
@@ -77,13 +80,16 @@ function InnerType(props: PropsType & {children?: React.ReactNode}) {
             onBlur={props.onBlur}
             name={`${props.fieldKey}-inner_type`}
             isInvalid={props.isInvalid}
-            children={props.children}
             required
-        />
+        >
+            {props.children}
+        </BaseConfigurationFieldElement>
     );
 }
 
-function AcceptedTypes(props: PropsType & {children?: React.ReactNode}) {
+function AcceptedTypes(
+    props: PropsType & {children?: React.ReactNode}
+): JSX.Element {
     return (
         <BaseConfigurationFieldElement
             label="Accepted types"
@@ -94,13 +100,14 @@ function AcceptedTypes(props: PropsType & {children?: React.ReactNode}) {
             onBlur={props.onBlur}
             name={`${props.fieldKey}-accepted_types`}
             isInvalid={props.isInvalid}
-            children={props.children}
             required
         />
     );
 }
 
-function DisplayName(props: PropsType & {children?: React.ReactNode}) {
+function DisplayName(
+    props: PropsType & {children?: React.ReactNode}
+): JSX.Element {
     return (
         <BaseConfigurationFieldElement
             label="Display name"
@@ -111,13 +118,14 @@ function DisplayName(props: PropsType & {children?: React.ReactNode}) {
             onBlur={props.onBlur}
             name={`${props.fieldKey}-display_name`}
             isInvalid={props.isInvalid}
-            children={props.children}
             required
         />
     );
 }
 
-function FormHelpText(props: PropsType & {children?: React.ReactNode}) {
+function FormHelpText(
+    props: PropsType & {children?: React.ReactNode}
+): JSX.Element {
     return (
         <BaseConfigurationFieldElement
             label="Form help text"
@@ -128,13 +136,14 @@ function FormHelpText(props: PropsType & {children?: React.ReactNode}) {
             onBlur={props.onBlur}
             name={`${props.fieldKey}-form_help_text`}
             isInvalid={props.isInvalid}
-            children={props.children}
             required
         />
     );
 }
 
-function MainAttribute(props: PropsType & {children?: React.ReactNode}) {
+function MainAttribute(
+    props: PropsType & {children?: React.ReactNode}
+): JSX.Element {
     return (
         <BaseConfigurationFieldElement
             label="Main attribute value"
@@ -145,13 +154,12 @@ function MainAttribute(props: PropsType & {children?: React.ReactNode}) {
             onBlur={props.onBlur}
             name={`${props.fieldKey}-main_attribute`}
             isInvalid={props.isInvalid}
-            children={props.children}
             required
         />
     );
 }
 
-function SortKey(props: PropsType & {children?: React.ReactNode}) {
+function SortKey(props: PropsType & {children?: React.ReactNode}): JSX.Element {
     return (
         <BaseConfigurationFieldElement
             label="Sort key value"
@@ -162,7 +170,6 @@ function SortKey(props: PropsType & {children?: React.ReactNode}) {
             onBlur={props.onBlur}
             name={`${props.fieldKey}-sort_key`}
             isInvalid={props.isInvalid}
-            children={props.children}
             required
         />
     );

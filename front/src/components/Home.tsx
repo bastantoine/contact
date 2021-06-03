@@ -32,7 +32,7 @@ export type FieldConfigType = {
 export type ConfigType = {
     [k: string]: FieldConfigType;
 };
-type PropsType = {};
+type PropsType = Record<string, unknown>;
 type StateType = {
     isLoaded: boolean;
     isConfigLoaded: boolean;
@@ -69,7 +69,7 @@ class Home extends Component<PropsType, StateType> {
         };
     }
 
-    loadConfig() {
+    loadConfig(): Promise<any> {
         return fetchJsonOrThrow(join(API_ENDPOINT, "config"))
             .then((config) => this.loadConfigFromJson(config))
             .catch((error: Error) => {
@@ -80,7 +80,7 @@ class Home extends Component<PropsType, StateType> {
             });
     }
 
-    loadConfigFromJson(config: {[k: string]: any}) {
+    loadConfigFromJson(config: {[k: string]: any}): void {
         // Check if the config is empty. From
         // https://stackoverflow.com/a/32108184
         if (
@@ -100,11 +100,11 @@ class Home extends Component<PropsType, StateType> {
                 isConfigEmpty: true,
             });
         } else {
-            let attributes: string[] = [];
-            let main_attributes: [number, string][] = [];
-            let sort_keys: [number, string][] = [];
+            const attributes: string[] = [];
+            const main_attributes: [number, string][] = [];
+            const sort_keys: [number, string][] = [];
             let primary_key = "";
-            for (let key in config) {
+            for (const key in config) {
                 attributes.push(key);
                 if (config[key].main_attribute !== undefined) {
                     // This key is marked as a main attribute, which means
@@ -151,7 +151,7 @@ class Home extends Component<PropsType, StateType> {
         }
     }
 
-    loadContacts() {
+    loadContacts(): Promise<any> {
         return fetchJsonOrThrow(join(API_ENDPOINT, "contact"))
             .then((contacts) => {
                 this.setState({
@@ -167,11 +167,11 @@ class Home extends Component<PropsType, StateType> {
             });
     }
 
-    sortContacts() {
+    sortContacts(): void {
         if (!this.state.isConfigEmpty) {
-            let listContacts = this.state.contacts.slice();
+            const listContacts = this.state.contacts.slice();
             listContacts.sort((c1, c2) => {
-                for (let sort_key of this.state.config.sort_keys) {
+                for (const sort_key of this.state.config.sort_keys) {
                     if (c1[sort_key] < c2[sort_key]) return -1;
                     if (c1[sort_key] > c2[sort_key]) return 1;
                 }
@@ -181,7 +181,7 @@ class Home extends Component<PropsType, StateType> {
         }
     }
 
-    componentDidMount() {
+    componentDidMount(): void {
         // Load the config and the contacts, and then sort them. We need to do
         // the sort after both calls are done, because we need the config to
         // sort the list of contacts.
@@ -191,12 +191,12 @@ class Home extends Component<PropsType, StateType> {
     }
 
     private prepare_file_fields(values: {[k: string]: any}) {
-        let file_fields = this.state.config.attributes.filter((attr) =>
+        const file_fields = this.state.config.attributes.filter((attr) =>
             FILE_FIELDS.includes(
                 String(this.state.config.raw_config[attr].type)
             )
         );
-        for (let field of file_fields) {
+        for (const field of file_fields) {
             if (this.state.files[field] !== undefined) {
                 // For each file passed in the form, store only the filename,
                 // the upload of the file itself is done after
@@ -207,14 +207,14 @@ class Home extends Component<PropsType, StateType> {
     }
 
     private addUploadedFile(attribute: string, file: File) {
-        let alreadyUploadedFiles = this.state.files;
+        const alreadyUploadedFiles = this.state.files;
         alreadyUploadedFiles[attribute] = file;
         this.setState({files: alreadyUploadedFiles});
     }
 
     private uploadFilesToContact(id: string | number, method: "POST" | "PUT") {
-        let files = new FormData();
-        for (let [field, file] of Object.entries(this.state.files)) {
+        const files = new FormData();
+        for (const [field, file] of Object.entries(this.state.files)) {
             files.append(field, file);
         }
         fetchJsonOrThrow(join(API_ENDPOINT, "contact", String(id), "files"), {
@@ -222,7 +222,7 @@ class Home extends Component<PropsType, StateType> {
             body: files,
         })
             .then((data) => {
-                let new_contacts = this.state.contacts
+                const new_contacts = this.state.contacts
                     .slice()
                     .filter(
                         (contact) =>
@@ -241,7 +241,7 @@ class Home extends Component<PropsType, StateType> {
         fetchOrThrow(join(API_ENDPOINT, "contact", String(id)), {
             method: "DELETE",
         }).then(() => {
-            let filtered_contacts = this.state.contacts.filter((contact) => {
+            const filtered_contacts = this.state.contacts.filter((contact) => {
                 return contact[this.state.config.primary_key] !== id;
             });
             this.setState({contacts: filtered_contacts});
@@ -266,7 +266,7 @@ class Home extends Component<PropsType, StateType> {
                             "POST"
                         );
                     } else {
-                        let new_contacts = this.state.contacts.slice();
+                        const new_contacts = this.state.contacts.slice();
                         new_contacts.push(data);
                         this.setState({
                             contacts: new_contacts,
@@ -278,8 +278,11 @@ class Home extends Component<PropsType, StateType> {
     }
 
     private editContact(id: string | number, values: {[k: string]: any}) {
-        function removeEmpty(obj: {}): {} {
+        function removeEmpty(
+            obj: Record<string, unknown>
+        ): Record<string, unknown> {
             return Object.fromEntries(
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 Object.entries(obj).filter(([_, v]) => v != null)
             );
         }
@@ -300,7 +303,7 @@ class Home extends Component<PropsType, StateType> {
                             "PUT"
                         );
                     } else {
-                        let new_contacts = this.state.contacts
+                        const new_contacts = this.state.contacts
                             .slice()
                             .filter(
                                 (contact) =>
@@ -317,23 +320,26 @@ class Home extends Component<PropsType, StateType> {
         );
     }
 
-    configUpdatedHandler(config: {[k: string]: any}) {
+    configUpdatedHandler(config: {[k: string]: any}): void {
         Promise.all([this.loadConfigFromJson(config)]).then(() =>
             this.sortContacts()
         );
     }
 
-    renderDisplayedListTitle(contact: any, attributes: string[]) {
-        let values: string[] = [];
-        for (let attribute of attributes) values.push(contact[attribute]);
+    renderDisplayedListTitle(
+        contact: {[k: string]: any},
+        attributes: string[]
+    ): string {
+        const values: string[] = [];
+        for (const attribute of attributes) values.push(contact[attribute]);
         return values.join(" ");
     }
 
     private renderSideBarContactList() {
-        let groupedListContacts: {[k: string]: any[]} = {};
+        const groupedListContacts: {[k: string]: any[]} = {};
         if (this.state.config.sort_keys.length > 0) {
             const key = this.state.config.sort_keys[0];
-            for (let contact of this.state.contacts) {
+            for (const contact of this.state.contacts) {
                 const category = String(contact[key]).substring(0, 1);
                 if (!groupedListContacts[category])
                     groupedListContacts[category] = [];
@@ -460,7 +466,7 @@ class Home extends Component<PropsType, StateType> {
         );
     }
 
-    render() {
+    render(): JSX.Element {
         if (this.state.error) {
             return <div>{this.state.error}</div>;
         } else if (!this.state.isLoaded && !this.state.isConfigLoaded) {

@@ -1,4 +1,4 @@
-import {Component} from "react";
+import React, {Component} from "react";
 import {Alert, Button, ButtonGroup, Form} from "react-bootstrap";
 import {Formik} from "formik";
 import {DragDropContext, Droppable, Draggable} from "react-beautiful-dnd";
@@ -8,6 +8,9 @@ import {APIError, fetchOrThrow, getRandomString, join} from "../../utils";
 import {ConfigType} from "../Home";
 import ConfigurationField from "./configurationField/ConfigurationField";
 
+// Disable the warning about the use of 'any' instead of a more specific type,
+// because either we cannot do it more precisely, or there's not easy way (yet?)
+// to do it.
 type PropsType = {
     config: {
         main_attributes: string[];
@@ -33,11 +36,11 @@ class Configuration extends Component<PropsType, StateType> {
         // value of the param of the current field. This way, by using the same
         // mapping '<fieldName>-<param>' for all the input's name, formik will
         // know which value to update in case of change.
-        let form_config: {[k: string]: any} = {};
-        for (let [fieldName, fieldConfig] of Object.entries(
+        const form_config: {[k: string]: any} = {};
+        for (const [fieldName, fieldConfig] of Object.entries(
             this.props.config.raw_config
         )) {
-            for (let [param, value] of Object.entries(fieldConfig))
+            for (const [param, value] of Object.entries(fieldConfig))
                 form_config[`${fieldName}-${param}`] = value;
         }
         this.state = {
@@ -55,7 +58,7 @@ class Configuration extends Component<PropsType, StateType> {
         };
     }
 
-    render() {
+    render(): JSX.Element {
         return (
             <>
                 <Formik
@@ -67,20 +70,22 @@ class Configuration extends Component<PropsType, StateType> {
                         setSubmitting(true);
                         setStatus({});
                         this.setState({error: null, submitSucessfull: false});
-                        let formattedConfig: {[k: string]: {[k: string]: any}} =
-                            {};
-                        for (let fieldKey of this.state.fields) {
-                            let fieldValues = Object.fromEntries(
+                        const formattedConfig: {
+                            [k: string]: {[k: string]: any};
+                        } = {};
+                        for (const fieldKey of this.state.fields) {
+                            const fieldValues = Object.fromEntries(
                                 Object.entries(values)
+                                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                                     .filter(([k, _]) => k.startsWith(fieldKey))
                                     .map(([k, v]) => [
                                         k.replace(`${fieldKey}-`, ""),
                                         v,
                                     ])
                             );
-                            let fieldName = fieldValues.name || fieldKey;
+                            const fieldName = fieldValues.name || fieldKey;
                             if (fieldValues.name) delete fieldValues.name;
-                            for (let param of Object.keys(fieldValues)) {
+                            for (const param of Object.keys(fieldValues)) {
                                 if (
                                     param === "required" ||
                                     param === "primary_key"
@@ -146,10 +151,10 @@ class Configuration extends Component<PropsType, StateType> {
                             }
                             if (fieldValues.type === "select") {
                                 // Values that shouldn't be included in the server config
-                                let deleted_values: string[] = [];
+                                const deleted_values: string[] = [];
                                 // Values that should be included in the server config
-                                let allowed_values: string[] = [];
-                                for (let [key, value] of Object.entries(
+                                const allowed_values: string[] = [];
+                                for (const [key, value] of Object.entries(
                                     fieldValues
                                 )) {
                                     if (
@@ -160,7 +165,7 @@ class Configuration extends Component<PropsType, StateType> {
                                         delete fieldValues[key];
                                     }
                                 }
-                                for (let [key, value] of Object.entries(
+                                for (const [key, value] of Object.entries(
                                     fieldValues
                                 )) {
                                     if (key.startsWith("allowed_values-")) {
@@ -195,7 +200,7 @@ class Configuration extends Component<PropsType, StateType> {
                                                 !deleted_values.includes(value)
                                         );
                                 }
-                                for (let value of allowed_values) {
+                                for (const value of allowed_values) {
                                     fieldValues.additional_type_parameters.allowed_values.push(
                                         value
                                     );
@@ -218,12 +223,12 @@ class Configuration extends Component<PropsType, StateType> {
                                         error.message,
                                 });
                                 if (error_json_body) {
-                                    let fields: string[] = Array.isArray(
+                                    const fields: string[] = Array.isArray(
                                         error_json_body.field
                                     )
                                         ? error_json_body.field
                                         : [error_json_body.field];
-                                    let params: string[] = Array.isArray(
+                                    const params: string[] = Array.isArray(
                                         error_json_body.param
                                     )
                                         ? error_json_body.param
@@ -273,8 +278,8 @@ class Configuration extends Component<PropsType, StateType> {
                                     // Don't do anything if the field has been dropped
                                     // outside of the droppable zone
                                     if (!result.destination) return;
-                                    let from = result.source.index;
-                                    let to = result.destination?.index;
+                                    const from = result.source.index;
+                                    const to = result.destination?.index;
                                     function array_move(
                                         arr: any[],
                                         from: number,
@@ -283,7 +288,7 @@ class Configuration extends Component<PropsType, StateType> {
                                         // Helper to move an element of an array from 'from' to 'to'
                                         // From https://stackoverflow.com/a/5306832
                                         if (to >= arr.length) {
-                                            var k = to - arr.length + 1;
+                                            let k = to - arr.length + 1;
                                             while (k--) arr.push(undefined);
                                         }
                                         arr.splice(
@@ -319,6 +324,7 @@ class Configuration extends Component<PropsType, StateType> {
                                                                 values
                                                             )
                                                                 .filter(
+                                                                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                                                                     ([k, _]) =>
                                                                         k.startsWith(
                                                                             fieldKey
@@ -425,11 +431,11 @@ class Configuration extends Component<PropsType, StateType> {
                             <ButtonGroup>
                                 <Button
                                     onClick={() => {
-                                        let {fields, fields_keys_to_names} =
+                                        const {fields, fields_keys_to_names} =
                                             this.state;
 
                                         // Use a random string as the key, but keep a blank name
-                                        let new_field_key = getRandomString();
+                                        const new_field_key = getRandomString();
                                         fields.push(new_field_key);
                                         fields_keys_to_names[new_field_key] =
                                             "";

@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 import React from "react";
 import Configuration from "./Configuration";
 
@@ -9,7 +10,7 @@ type PropsType = {
 // 'children' does not exist on type 'IntrinsicAttributes & PropsType'"
 function ConfigurationOnboarding(
     props: PropsType & {children?: React.ReactNode}
-) {
+): JSX.Element {
     return (
         <>
             Looks like you don't have a configuration set...

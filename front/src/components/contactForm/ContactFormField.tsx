@@ -36,6 +36,7 @@ function findInputTypeFromAttributeType(
         case "image":
             return "file";
         case "list":
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             return findInputTypeFromAttributeType(inner_type!);
         case "email":
             return "email";
@@ -52,19 +53,21 @@ function findInputTypeFromAttributeType(
 
 // We have to add the property children, otherwise we have an error "Property
 // 'children' does not exist on type 'IntrinsicAttributes & PropsType'"
-function ContactFormField(props: PropsType & {children?: React.ReactNode}) {
-    let displayed_name = props.attribute_config.display_name
+function ContactFormField(
+    props: PropsType & {children?: React.ReactNode}
+): JSX.Element {
+    const displayed_name = props.attribute_config.display_name
         ? props.attribute_config.display_name
         : upperFirstLetter(props.attribute);
-    let additional_type_parameters =
+    const additional_type_parameters =
         props.attribute_config.additional_type_parameters;
-    let input_type = findInputTypeFromAttributeType(
+    const input_type = findInputTypeFromAttributeType(
         props.attribute_config.type,
         (additional_type_parameters && additional_type_parameters.inner_type) ||
             ""
     );
-    let help_text = props.attribute_config.form_help_text;
-    let _getValueForToggle = (value: boolean) =>
+    const help_text = props.attribute_config.form_help_text;
+    const _getValueForToggle = (value: boolean) =>
         getValueForToggle(
             value,
             additional_type_parameters
@@ -164,7 +167,7 @@ function ContactFormField(props: PropsType & {children?: React.ReactNode}) {
                     <></>
                 )}
                 {/* Add error message if needed */}
-                {!!props.errors ? (
+                {props.errors ? (
                     <Form.Control.Feedback type="invalid">
                         {props.errors}
                     </Form.Control.Feedback>
