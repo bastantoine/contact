@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button, ButtonGroup, Col, Collapse, Form, InputGroup, Row } from "react-bootstrap";
-import { getRandomString } from "../../utils";
-import { ATTRIBUTE_TYPE_COMPONENT_MAPPING, LIST_ALLOWED_INNER_TYPES } from "../TypeComponents";
+import { getRandomString } from "../../../utils";
+import { ATTRIBUTE_TYPE_COMPONENT_MAPPING, LIST_ALLOWED_INNER_TYPES } from "../../TypeComponents";
 import './ConfigurationField.css'
 
 type PropsType = {

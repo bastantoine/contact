@@ -6,7 +6,7 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { API_ENDPOINT } from "../../config";
 import { APIError, fetchOrThrow, getRandomString, join } from "../../utils";
 import { ConfigType } from "../Home";
-import ConfigurationField from "./ConfigurationField";
+import ConfigurationField from "./configurationField/ConfigurationField";
 
 type PropsType = {
     config: {
