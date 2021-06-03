@@ -47,6 +47,7 @@
   },
   "devDependencies": {
     "@types/react-beautiful-dnd": "^13.0.0",
-    "@types/yup": "^0.29.11"
+    "@types/yup": "^0.29.11",
+    "prettier": "2.3.0"
   }
 }
