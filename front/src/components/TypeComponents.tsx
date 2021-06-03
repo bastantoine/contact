@@ -1,22 +1,23 @@
+import React from "react";
 import {getValueForToggle} from "../utils";
 
 type TypeComponentPropsType = {value: string; extra_params?: any};
 
-export function TextComponent(props: TypeComponentPropsType) {
+export function TextComponent(props: TypeComponentPropsType): JSX.Element {
     return <>{props.value}</>;
 }
 
 export function ListComponent(props: {
     value: string[];
     extra_params: {inner_type: keyof typeof _ATTRIBUTE_TYPE_COMPONENT_MAPPING};
-}) {
+}): JSX.Element {
     if (props.value) {
         // This weird syntax tells the TS compiler that the allowed
         // types are the keys of _ATTRIBUTE_TYPE_COMPONENT_MAPPING
         // From https://stackoverflow.com/a/57088282/
-        let attribute_type: keyof typeof _ATTRIBUTE_TYPE_COMPONENT_MAPPING =
+        const attribute_type: keyof typeof _ATTRIBUTE_TYPE_COMPONENT_MAPPING =
             props.extra_params.inner_type;
-        let ComponentToUse =
+        const ComponentToUse =
             _ATTRIBUTE_TYPE_COMPONENT_MAPPING[attribute_type] || TextComponent;
         // The trick we use in the next line works with values.length >= 2, so
         // we need to cvoer the case of no elements or a single element before
@@ -40,7 +41,7 @@ export function ListComponent(props: {
     return <></>;
 }
 
-export function ImageComponent(props: TypeComponentPropsType) {
+export function ImageComponent(props: TypeComponentPropsType): JSX.Element {
     return <img src={props.value} alt="" />;
 }
 
@@ -48,7 +49,7 @@ function BaseUrlComponent(props: {link: string; value: string}) {
     return <a href={props.link}>{props.value}</a>;
 }
 
-export function UrlComponent(props: TypeComponentPropsType) {
+export function UrlComponent(props: TypeComponentPropsType): JSX.Element {
     function stripHTTP(url: string): string {
         if (url.startsWith("https://")) return url.slice(8);
         if (url.startsWith("http://")) return url.slice(7);
@@ -63,7 +64,7 @@ export function UrlComponent(props: TypeComponentPropsType) {
     );
 }
 
-export function EmailComponent(props: TypeComponentPropsType) {
+export function EmailComponent(props: TypeComponentPropsType): JSX.Element {
     return (
         <BaseUrlComponent
             link={`mailto:${props.value}`}
@@ -75,7 +76,7 @@ export function EmailComponent(props: TypeComponentPropsType) {
 export function ToggleComponent(props: {
     value: string;
     extra_params?: {value_true: string; value_false: string};
-}) {
+}): JSX.Element {
     return (
         <TextComponent
             value={getValueForToggle(

@@ -18,13 +18,18 @@ type PropsType = {
         raw_config: ConfigType;
     };
     fileInputChangeHandler: (attribute: string, file: File) => void;
-    editContactHandler: (id: string | number, values: {}) => Promise<void>;
+    editContactHandler: (
+        id: string | number,
+        values: Record<string, unknown>
+    ) => Promise<void>;
     deleteContactHandler: (id: string | number) => void;
 };
 
 // We have to add the property children, otherwise we have an error "Property
 // 'children' does not exist on type 'IntrinsicAttributes & PropsType'"
-function ContactDetails(props: PropsType & {children?: React.ReactNode}) {
+function ContactDetails(
+    props: PropsType & {children?: React.ReactNode}
+): JSX.Element {
     const [isFormDisplayed, setIsFormDisplayed] = useState(false);
 
     return (
@@ -37,11 +42,11 @@ function ContactDetails(props: PropsType & {children?: React.ReactNode}) {
                 {props.config.attributes.map((attribute) => {
                     // Display only if the attribute is not the primary key
                     if (attribute !== props.config.primary_key) {
-                        let has_display_name =
+                        const has_display_name =
                             props.config.raw_config[attribute].display_name;
-                        let attribute_type =
+                        const attribute_type =
                             props.config.raw_config[attribute].type;
-                        let ComponentToUse =
+                        const ComponentToUse =
                             ATTRIBUTE_TYPE_COMPONENT_MAPPING[attribute_type] ||
                             TextComponent;
                         return (
@@ -111,7 +116,7 @@ function ContactDetails(props: PropsType & {children?: React.ReactNode}) {
                     initial_value={deepCopy(props.contact)}
                     config={props.config}
                     fileInputChangeHandler={props.fileInputChangeHandler}
-                    submitHandler={(values: {}) => {
+                    submitHandler={(values: Record<string, unknown>) => {
                         return props.editContactHandler(
                             props.contact[props.config.primary_key],
                             values
