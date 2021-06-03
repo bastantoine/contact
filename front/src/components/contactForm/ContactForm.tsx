@@ -16,7 +16,7 @@ type PropsType = {
         raw_config: ConfigType;
     };
     fileInputChangeHandler: (attribute: string, file: File) => void;
-    submitHandler: (values: {}) => Promise<void>;
+    submitHandler: (values: Record<string, unknown>) => Promise<void>;
     submitButtonMessage: string;
 };
 type StateType = {
@@ -69,10 +69,10 @@ class ContactForm extends Component<PropsType, StateType> {
             toggle: Yup.boolean(),
         };
 
-        let shape: {[k: string]: Yup.BaseSchema} = {};
+        const shape: {[k: string]: Yup.BaseSchema} = {};
         // Build the initial values and validation shape
         // object based on the config provided by the API
-        for (let attribute of this.props.config.attributes) {
+        for (const attribute of this.props.config.attributes) {
             if (attribute !== this.props.config.primary_key) {
                 const attribute_config =
                     this.props.config.raw_config[attribute];
@@ -96,14 +96,15 @@ class ContactForm extends Component<PropsType, StateType> {
                 let validator: Yup.BaseSchema;
                 if (attribute_type === "list") {
                     const inner_type =
-                        attribute_config.additional_type_parameters!.inner_type;
+                        attribute_config.additional_type_parameters?.inner_type;
                     validator = this.array_validator(
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         YUP_TYPE_BINDINGS[inner_type!]
                     );
                 } else {
                     validator = YUP_TYPE_BINDINGS[attribute_type];
                 }
-                if (!!attribute_config.required) {
+                if (attribute_config.required) {
                     validator = validator.required("Missing value");
                 }
                 shape[attribute] = validator;
@@ -112,8 +113,8 @@ class ContactForm extends Component<PropsType, StateType> {
         return Yup.object().shape(shape);
     }
 
-    render() {
-        let validationSchema = this.buildValidationSchema();
+    render(): JSX.Element {
+        const validationSchema = this.buildValidationSchema();
 
         // Base formik form taken from https://hackernoon.com/building-react-forms-with-formik-yup-and-react-bootstrap-with-a-minimal-amount-of-pain-and-suffering-1sfk3xv8
         return (
@@ -126,7 +127,7 @@ class ContactForm extends Component<PropsType, StateType> {
                         {setSubmitting, resetForm, setFieldError}
                     ) => {
                         // Make sure everything is a string
-                        let firstNonEmptyValue = Object.values(values)
+                        const firstNonEmptyValue = Object.values(values)
                             .map((v) => String(v))
                             .find((v: string) => v !== "");
                         if (firstNonEmptyValue) {
@@ -134,7 +135,7 @@ class ContactForm extends Component<PropsType, StateType> {
                             this.setState({hasErrorInSubmit: false});
                             // When button submits form and form is in the process of submitting, submit button is disabled
                             setSubmitting(true);
-                            for (let attribute of this.props.config
+                            for (const attribute of this.props.config
                                 .attributes) {
                                 const attribute_type =
                                     this.props.config.raw_config[attribute]
@@ -158,14 +159,14 @@ class ContactForm extends Component<PropsType, StateType> {
                                     // Make sure the arrays are transformed back to string
                                     // value, so that the client side validation will still
                                     // work on them
-                                    for (let val of Object.keys(values)) {
+                                    for (const val of Object.keys(values)) {
                                         if (Array.isArray(values[val]))
                                             values[val] =
                                                 values[val].join(", ");
                                     }
                                     setSubmitting(false);
                                     this.setState({hasErrorInSubmit: true});
-                                    let error_body =
+                                    const error_body =
                                         await error.response.json();
                                     let error_message: string;
                                     switch (error_body.code) {
