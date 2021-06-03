@@ -88,30 +88,24 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
             </div>
             <Collapse in={open}>
                 <div id={`config-form-field-${props.fieldName}`}>
-                <ConfigurationFieldElement
-                    label="Name"
-                    type={"text"}
-                    placeholder={"Name"}
-                    defaultValue={props.fieldName}
+                <ConfigurationFieldElement.Name
+                    fieldKey={props.fieldKey}
+                    fieldName={props.fieldName}
                     onChange={((event: _EventType) => {setFieldNameHook(event.target.value); props.onChange(event)})}
                     onBlur={props.onBlur}
-                    name={`${props.fieldKey}-name`}
                     isInvalid={props.errorsFields.includes(`${props.fieldKey}-name`)}
-                    required
                 />
-                <ConfigurationFieldElement
-                    label="Type"
-                    as="select"
+                <ConfigurationFieldElement.Type
+                    fieldKey={props.fieldKey}
+                    fieldName={props.fieldName}
                     defaultValue={Object.keys(ATTRIBUTE_TYPE_COMPONENT_MAPPING).includes(String(props.fieldConfig.type)) ? props.fieldConfig.type : "Choose type..."}
-                    onChange={(event) => {setTypeHook(event.target.value); props.onChange(event)}}
+                    onChange={(event: _EventType) => {setTypeHook(event.target.value); props.onChange(event)}}
                     onBlur={props.onBlur}
-                    name={`${props.fieldKey}-type`}
                     isInvalid={props.errorsFields.includes(`${props.fieldKey}-type`)}
-                    required
                 >
                     <option>Choose type...</option>
                     {Object.keys(ATTRIBUTE_TYPE_COMPONENT_MAPPING).map((type) => <option key={type}>{type}</option>)}
-                </ConfigurationFieldElement>
+                </ConfigurationFieldElement.Type>
                 <Form.Group as={Row}>
                     <Form.Label column xl={3}></Form.Label>
                     <Col xl={9}>
@@ -138,9 +132,9 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                         </Form.Row>
                     </Col>
                 </Form.Group>
-                {typeHook === 'list' ? <ConfigurationFieldElement
-                    label="Inner type"
-                    as="select"
+                {typeHook === 'list' ? <ConfigurationFieldElement.InnerType
+                    fieldKey={props.fieldKey}
+                    fieldName={props.fieldName}
                     defaultValue={props.fieldConfig.additional_type_parameters ? (
                                     LIST_ALLOWED_INNER_TYPES.includes(props.fieldConfig.additional_type_parameters.inner_type) ?
                                     props.fieldConfig.additional_type_parameters.inner_type :
@@ -149,27 +143,22 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                                 }
                     onChange={props.onChange}
                     onBlur={props.onBlur}
-                    name={`${props.fieldKey}-inner_type`}
                     isInvalid={props.errorsFields.includes(`${props.fieldKey}-inner_type`)}
-                    required
                 >
                     <option>Choose type...</option>
                     {LIST_ALLOWED_INNER_TYPES.map((type) => <option key={type}>{type}</option>)}
-                </ConfigurationFieldElement> : <></>}
-                {typeHook === 'image' ? <ConfigurationFieldElement
-                    label="Accepted types"
-                    formText="nter the format of images that should be accepted, by separating them with a comma. Ex: 'png, jpg, jpeg'"
-                    type="text"
-                    placeholder="Accepted types"
+                </ConfigurationFieldElement.InnerType> : <></>}
+                {typeHook === 'image' ? <ConfigurationFieldElement.AcceptedTypes
+                    fieldKey={props.fieldKey}
+                    fieldName={props.fieldName}
+                    formText="Enter the format of images that should be accepted, by separating them with a comma. Ex: 'png, jpg, jpeg'"
                     defaultValue={props.fieldConfig.additional_type_parameters ?
                                     props.fieldConfig.additional_type_parameters.accepted_types :
                                     undefined
                                 }
                     onChange={props.onChange}
                     onBlur={props.onBlur}
-                    name={`${props.fieldKey}-accepted_types`}
                     isInvalid={props.errorsFields.includes(`${props.fieldKey}-accepted_types`)}
-                    required
                 /> : <></>}
                 {typeHook === 'toggle' ? <Form.Group as={Row}>
                     <Form.Label column xl={3}>
@@ -287,44 +276,36 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                         </ButtonGroup>
                     </Col>
                 </Row>
-                {isButtonDisplayedNameDisplayed ? <ConfigurationFieldElement
-                    label="Display name"
-                    type="text"
-                    placeholder="Display name"
+                {isButtonDisplayedNameDisplayed ? <ConfigurationFieldElement.DisplayName
+                    fieldKey={props.fieldKey}
+                    fieldName={props.fieldName}
                     defaultValue={props.fieldConfig.display_name}
                     onBlur={props.onBlur}
                     onChange={(event) => {setDisplayNameHook(event.target.value); props.onChange(event)}}
-                    name={`${props.fieldKey}-display_name`}
                     isInvalid={props.errorsFields.includes(`${props.fieldKey}-display_name`)}
                 /> : <></>}
-                {isButtonFormHelpTextDisplayed ? <ConfigurationFieldElement
-                    label="Form help text"
-                    type="text"
-                    placeholder="Form help text"
+                {isButtonFormHelpTextDisplayed ? <ConfigurationFieldElement.FormHelpText
+                    fieldKey={props.fieldKey}
+                    fieldName={props.fieldName}
                     defaultValue={props.fieldConfig.form_help_text}
                     onChange={props.onChange}
                     onBlur={props.onBlur}
-                    name={`${props.fieldKey}-form_help_text`}
                     isInvalid={props.errorsFields.includes(`${props.fieldKey}-form_help_text`)}
                 /> : <></>}
-                {isButtonMainAttributeDisplayed ? <ConfigurationFieldElement
-                    label="Main attribute value"
-                    type="text"
-                    placeholder="Main attribute value"
+                {isButtonMainAttributeDisplayed ? <ConfigurationFieldElement.MainAttribute
+                    fieldKey={props.fieldKey}
+                    fieldName={props.fieldName}
                     defaultValue={props.fieldConfig.main_attribute}
                     onChange={props.onChange}
                     onBlur={props.onBlur}
-                    name={`${props.fieldKey}-main_attribute`}
                     isInvalid={props.errorsFields.includes(`${props.fieldKey}-main_attribute`)}
                 /> : <></>}
-                {isButtonSortKeyDisplated ? <ConfigurationFieldElement
-                    label="Sort key value"
-                    type="text"
-                    placeholder="Sort key value"
+                {isButtonSortKeyDisplated ? <ConfigurationFieldElement.SortKey
+                    fieldKey={props.fieldKey}
+                    fieldName={props.fieldName}
                     defaultValue={props.fieldConfig.sort_key}
                     onChange={props.onChange}
                     onBlur={props.onBlur}
-                    name={`${props.fieldKey}-sort_key`}
                     isInvalid={props.errorsFields.includes(`${props.fieldKey}-sort_key`)}
                 /> : <></>}
                 <Row>
