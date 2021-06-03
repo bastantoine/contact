@@ -28,11 +28,11 @@ div.field-configuration-form > * {
     margin: auto;
 }
 .field-configuration-name-title-value:before {
-    margin-right: 10px
+    margin-right: 10px;
 }
 
 .field-configuration-name-title-value:after {
-    margin-left: 10px
+    margin-left: 10px;
 }
 
 .button-full-width {

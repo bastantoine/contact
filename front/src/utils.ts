@@ -11,60 +11,76 @@
  * @returns All the single paths appended together with a '/' between each
  */
 export function join(p: string, ...paths: string[]) {
-    let sep = '/';
+    let sep = "/";
     let output = p;
-    for(let path of paths) {
+    for (let path of paths) {
         if (path !== sep) {
             if (path.startsWith(sep)) {
-                output += path
+                output += path;
             } else {
-                output += sep + path
+                output += sep + path;
             }
         }
     }
-    return output
+    return output;
 }
 
 export function upperFirstLetter(input: string): string {
     return input ? input.charAt(0).toUpperCase() + input.slice(1) : input;
 }
 
-export function getValueForToggle(value: boolean, value_true: string|undefined, value_false: string|undefined): string {
-    return {value_true: value_true || 'Yes', value_false: value_false || 'No'}[value ? 'value_true' : 'value_false']
+export function getValueForToggle(
+    value: boolean,
+    value_true: string | undefined,
+    value_false: string | undefined
+): string {
+    return {value_true: value_true || "Yes", value_false: value_false || "No"}[
+        value ? "value_true" : "value_false"
+    ];
 }
 
 export function getRandomString() {
-    return Math.random().toString(36).substring(7)
+    return Math.random().toString(36).substring(7);
 }
 
-export function fetchOrThrow(input: RequestInfo, init?: RequestInit): Promise<any> {
-    return fetch(input, init)
-        .then(response => {
-            if (!response.ok) {
-                throw new APIError(response, `Error ${response.status}: ${response.statusText}`);
-            }
-            return response;
-        })
+export function fetchOrThrow(
+    input: RequestInfo,
+    init?: RequestInit
+): Promise<any> {
+    return fetch(input, init).then((response) => {
+        if (!response.ok) {
+            throw new APIError(
+                response,
+                `Error ${response.status}: ${response.statusText}`
+            );
+        }
+        return response;
+    });
 }
 
-export function fetchJsonOrThrow(input: RequestInfo, init?: RequestInit): Promise<any> {
-    return fetch(input, init)
-        .then(response => {
-            if (!response.ok) {
-                throw new APIError(response, `Error ${response.status}: ${response.statusText}`);
-            }
-            return response.json();
-        })
+export function fetchJsonOrThrow(
+    input: RequestInfo,
+    init?: RequestInit
+): Promise<any> {
+    return fetch(input, init).then((response) => {
+        if (!response.ok) {
+            throw new APIError(
+                response,
+                `Error ${response.status}: ${response.statusText}`
+            );
+        }
+        return response.json();
+    });
 }
 
 export class APIError extends Error {
-    response: Response
+    response: Response;
     constructor(response: Response, ...params: any) {
         super(...params);
-        if(Error.captureStackTrace) {
+        if (Error.captureStackTrace) {
             Error.captureStackTrace(this, APIError);
         }
-        this.name = 'APIError';
+        this.name = "APIError";
         this.response = response;
     }
 }
