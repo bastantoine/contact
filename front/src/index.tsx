@@ -1,17 +1,17 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import Home from './components/Home';
-import reportWebVitals from './reportWebVitals';
-import { Container } from "react-bootstrap";
+import React from "react";
+import ReactDOM from "react-dom";
+import "./index.css";
+import Home from "./components/Home";
+import reportWebVitals from "./reportWebVitals";
+import {Container} from "react-bootstrap";
 
 ReactDOM.render(
-  <React.StrictMode>
-    <Container>
-      <Home />
-    </Container>
-  </React.StrictMode>,
-  document.getElementById('root')
+    <React.StrictMode>
+        <Container>
+            <Home />
+        </Container>
+    </React.StrictMode>,
+    document.getElementById("root")
 );
 
 // If you want to start measuring performance in your app, pass a function
