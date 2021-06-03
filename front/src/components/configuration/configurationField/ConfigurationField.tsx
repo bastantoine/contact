@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Button, ButtonGroup, Col, Collapse, Form, InputGroup, Row } from "react-bootstrap";
-import { getRandomString } from "../../utils";
-import { ATTRIBUTE_TYPE_COMPONENT_MAPPING, LIST_ALLOWED_INNER_TYPES } from "../TypeComponents";
+import { getRandomString } from "../../../utils";
+import { ATTRIBUTE_TYPE_COMPONENT_MAPPING, LIST_ALLOWED_INNER_TYPES } from "../../TypeComponents";
+import ConfigurationFieldElement from "./ConfigurationFieldElement";
 import './ConfigurationField.css'
 
 type PropsType = {
@@ -20,6 +21,7 @@ type PropsType = {
     deleteFieldHandler: ((fieldKey: string) => void),
     errorsFields: string[],
 }
+type _EventType = { target: { value: React.SetStateAction<string>; }; }
 
 function getFieldTitle(fieldName: string, displayName: string): JSX.Element {
     if (fieldName && displayName) {
@@ -86,42 +88,24 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
             </div>
             <Collapse in={open}>
                 <div id={`config-form-field-${props.fieldName}`}>
-                <Form.Group as={Row}>
-                    <Form.Label column xl={3}>
-                        Name
-                    </Form.Label>
-                    <Col xl={9}>
-                        <Form.Control
-                            type="text"
-                            placeholder="Name"
-                            defaultValue={props.fieldName}
-                            onChange={(event) => {setFieldNameHook(event.target.value); props.onChange(event)}}
-                            onBlur={props.onBlur}
-                            name={`${props.fieldKey}-name`}
-                            isInvalid={props.errorsFields.includes(`${props.fieldKey}-name`)}
-                            required
-                        />
-                    </Col>
-                </Form.Group>
-                <Form.Group as={Row}>
-                    <Form.Label column xl={3}>
-                        Type
-                    </Form.Label>
-                    <Col xl={9}>
-                        <Form.Control
-                            as="select"
-                            defaultValue={Object.keys(ATTRIBUTE_TYPE_COMPONENT_MAPPING).includes(String(props.fieldConfig.type)) ? props.fieldConfig.type : "Choose type..."}
-                            onChange={(event) => {setTypeHook(event.target.value); props.onChange(event)}}
-                            onBlur={props.onBlur}
-                            name={`${props.fieldKey}-type`}
-                            isInvalid={props.errorsFields.includes(`${props.fieldKey}-type`)}
-                            required
-                        >
-                            <option>Choose type...</option>
-                            {Object.keys(ATTRIBUTE_TYPE_COMPONENT_MAPPING).map((type) => <option key={type}>{type}</option>)}
-                        </Form.Control>
-                    </Col>
-                </Form.Group>
+                <ConfigurationFieldElement.Name
+                    fieldKey={props.fieldKey}
+                    fieldName={props.fieldName}
+                    onChange={((event: _EventType) => {setFieldNameHook(event.target.value); props.onChange(event)})}
+                    onBlur={props.onBlur}
+                    isInvalid={props.errorsFields.includes(`${props.fieldKey}-name`)}
+                />
+                <ConfigurationFieldElement.Type
+                    fieldKey={props.fieldKey}
+                    fieldName={props.fieldName}
+                    defaultValue={Object.keys(ATTRIBUTE_TYPE_COMPONENT_MAPPING).includes(String(props.fieldConfig.type)) ? props.fieldConfig.type : "Choose type..."}
+                    onChange={(event: _EventType) => {setTypeHook(event.target.value); props.onChange(event)}}
+                    onBlur={props.onBlur}
+                    isInvalid={props.errorsFields.includes(`${props.fieldKey}-type`)}
+                >
+                    <option>Choose type...</option>
+                    {Object.keys(ATTRIBUTE_TYPE_COMPONENT_MAPPING).map((type) => <option key={type}>{type}</option>)}
+                </ConfigurationFieldElement.Type>
                 <Form.Group as={Row}>
                     <Form.Label column xl={3}></Form.Label>
                     <Col xl={9}>
@@ -148,51 +132,34 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                         </Form.Row>
                     </Col>
                 </Form.Group>
-                {typeHook === 'list' ? <Form.Group as={Row}>
-                    <Form.Label column xl={3}>
-                        Inner type
-                    </Form.Label>
-                    <Col xl={9}>
-                        <Form.Control
-                            as="select"
-                            defaultValue={props.fieldConfig.additional_type_parameters ? (
-                                            LIST_ALLOWED_INNER_TYPES.includes(props.fieldConfig.additional_type_parameters.inner_type) ?
-                                            props.fieldConfig.additional_type_parameters.inner_type :
-                                            "Choose type..."
-                                          ) : undefined
-                                        }
-                            onChange={props.onChange}
-                            onBlur={props.onBlur}
-                            name={`${props.fieldKey}-inner_type`}
-                            isInvalid={props.errorsFields.includes(`${props.fieldKey}-inner_type`)}
-                            required
-                        >
-                            <option>Choose type...</option>
-                            {LIST_ALLOWED_INNER_TYPES.map((type) => <option key={type}>{type}</option>)}
-                        </Form.Control>
-                    </Col>
-                </Form.Group> : <></>}
-                {typeHook === 'image' ? <Form.Group as={Row}>
-                    <Form.Label column xl={3}>
-                        Accepted types
-                    </Form.Label>
-                    <Col xl={9}>
-                        <Form.Control
-                            type="text"
-                            placeholder="Accepted types"
-                            defaultValue={props.fieldConfig.additional_type_parameters ?
-                                          props.fieldConfig.additional_type_parameters.accepted_types :
-                                          undefined
-                                        }
-                            onChange={props.onChange}
-                            onBlur={props.onBlur}
-                            name={`${props.fieldKey}-accepted_types`}
-                            isInvalid={props.errorsFields.includes(`${props.fieldKey}-accepted_types`)}
-                            required
-                        />
-                        <Form.Text muted>Enter the format of images that should be accepted, by separating them with a comma. Ex: 'png, jpg, jpeg'</Form.Text>
-                    </Col>
-                </Form.Group> : <></>}
+                {typeHook === 'list' ? <ConfigurationFieldElement.InnerType
+                    fieldKey={props.fieldKey}
+                    fieldName={props.fieldName}
+                    defaultValue={props.fieldConfig.additional_type_parameters ? (
+                                    LIST_ALLOWED_INNER_TYPES.includes(props.fieldConfig.additional_type_parameters.inner_type) ?
+                                    props.fieldConfig.additional_type_parameters.inner_type :
+                                    "Choose type..."
+                                    ) : undefined
+                                }
+                    onChange={props.onChange}
+                    onBlur={props.onBlur}
+                    isInvalid={props.errorsFields.includes(`${props.fieldKey}-inner_type`)}
+                >
+                    <option>Choose type...</option>
+                    {LIST_ALLOWED_INNER_TYPES.map((type) => <option key={type}>{type}</option>)}
+                </ConfigurationFieldElement.InnerType> : <></>}
+                {typeHook === 'image' ? <ConfigurationFieldElement.AcceptedTypes
+                    fieldKey={props.fieldKey}
+                    fieldName={props.fieldName}
+                    formText="Enter the format of images that should be accepted, by separating them with a comma. Ex: 'png, jpg, jpeg'"
+                    defaultValue={props.fieldConfig.additional_type_parameters ?
+                                    props.fieldConfig.additional_type_parameters.accepted_types :
+                                    undefined
+                                }
+                    onChange={props.onChange}
+                    onBlur={props.onBlur}
+                    isInvalid={props.errorsFields.includes(`${props.fieldKey}-accepted_types`)}
+                /> : <></>}
                 {typeHook === 'toggle' ? <Form.Group as={Row}>
                     <Form.Label column xl={3}>
                         Displayed values
@@ -309,70 +276,38 @@ function ConfigurationField(props: PropsType & { children?: React.ReactNode}) {
                         </ButtonGroup>
                     </Col>
                 </Row>
-                {isButtonDisplayedNameDisplayed ? <Form.Group as={Row}>
-                    <Form.Label column xl={3}>
-                        Display name
-                    </Form.Label>
-                    <Col xl={9}>
-                        <Form.Control
-                            type="text"
-                            placeholder="Display name"
-                            defaultValue={props.fieldConfig.display_name}
-                            onBlur={props.onBlur}
-                            onChange={(event) => {setDisplayNameHook(event.target.value); props.onChange(event)}}
-                            name={`${props.fieldKey}-display_name`}
-                            isInvalid={props.errorsFields.includes(`${props.fieldKey}-display_name`)}
-                        />
-                    </Col>
-                </Form.Group> : <></>}
-                {isButtonFormHelpTextDisplayed ? <Form.Group as={Row}>
-                    <Form.Label column xl={3}>
-                        Form help text
-                    </Form.Label>
-                    <Col xl={9}>
-                        <Form.Control
-                            type="text"
-                            placeholder="Form help text"
-                            defaultValue={props.fieldConfig.form_help_text}
-                            onChange={props.onChange}
-                            onBlur={props.onBlur}
-                            name={`${props.fieldKey}-form_help_text`}
-                            isInvalid={props.errorsFields.includes(`${props.fieldKey}-form_help_text`)}
-                        />
-                    </Col>
-                </Form.Group> : <></>}
-                {isButtonMainAttributeDisplayed ? <Form.Group as={Row}>
-                    <Form.Label column xl={3}>
-                        Main attribute value
-                    </Form.Label>
-                    <Col xl={9}>
-                        <Form.Control
-                            type="text"
-                            placeholder="Main attribute value"
-                            defaultValue={props.fieldConfig.main_attribute}
-                            onChange={props.onChange}
-                            onBlur={props.onBlur}
-                            name={`${props.fieldKey}-main_attribute`}
-                            isInvalid={props.errorsFields.includes(`${props.fieldKey}-main_attribute`)}
-                        />
-                    </Col>
-                </Form.Group> : <></>}
-                {isButtonSortKeyDisplated ? <Form.Group as={Row}>
-                    <Form.Label column xl={3}>
-                        Sort key value
-                    </Form.Label>
-                    <Col xl={9}>
-                        <Form.Control
-                            type="text"
-                            placeholder="Sort key value"
-                            defaultValue={props.fieldConfig.sort_key}
-                            onChange={props.onChange}
-                            onBlur={props.onBlur}
-                            name={`${props.fieldKey}-sort_key`}
-                            isInvalid={props.errorsFields.includes(`${props.fieldKey}-sort_key`)}
-                        />
-                    </Col>
-                </Form.Group> : <></>}
+                {isButtonDisplayedNameDisplayed ? <ConfigurationFieldElement.DisplayName
+                    fieldKey={props.fieldKey}
+                    fieldName={props.fieldName}
+                    defaultValue={props.fieldConfig.display_name}
+                    onBlur={props.onBlur}
+                    onChange={(event) => {setDisplayNameHook(event.target.value); props.onChange(event)}}
+                    isInvalid={props.errorsFields.includes(`${props.fieldKey}-display_name`)}
+                /> : <></>}
+                {isButtonFormHelpTextDisplayed ? <ConfigurationFieldElement.FormHelpText
+                    fieldKey={props.fieldKey}
+                    fieldName={props.fieldName}
+                    defaultValue={props.fieldConfig.form_help_text}
+                    onChange={props.onChange}
+                    onBlur={props.onBlur}
+                    isInvalid={props.errorsFields.includes(`${props.fieldKey}-form_help_text`)}
+                /> : <></>}
+                {isButtonMainAttributeDisplayed ? <ConfigurationFieldElement.MainAttribute
+                    fieldKey={props.fieldKey}
+                    fieldName={props.fieldName}
+                    defaultValue={props.fieldConfig.main_attribute}
+                    onChange={props.onChange}
+                    onBlur={props.onBlur}
+                    isInvalid={props.errorsFields.includes(`${props.fieldKey}-main_attribute`)}
+                /> : <></>}
+                {isButtonSortKeyDisplated ? <ConfigurationFieldElement.SortKey
+                    fieldKey={props.fieldKey}
+                    fieldName={props.fieldName}
+                    defaultValue={props.fieldConfig.sort_key}
+                    onChange={props.onChange}
+                    onBlur={props.onBlur}
+                    isInvalid={props.errorsFields.includes(`${props.fieldKey}-sort_key`)}
+                /> : <></>}
                 <Row>
                     <Col xl={{offset: 9, span: 3}}>
                         <Button
