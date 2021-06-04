@@ -3,6 +3,8 @@ name: Node prettier and linter
 on:
   push:
     branches: [master]
+    paths:
+      front/*
   pull_request:
     branches: [master]
   workflow_dispatch:
