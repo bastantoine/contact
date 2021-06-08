@@ -102,6 +102,14 @@ class ApiTest(BaseTestCase):
         ]
         self.assertEqual(resp.json, expected)
 
+    @with_config({"firstname": {"type": "str"}, "lastname": {"type": "str"}})
+    def test_contact_post(self):
+        resp = self.client.post('/contact', json={"firstname": "Luke", "lastname": "Skywalker"})
+        self.assert200(resp)
+        self.assertEqual(resp.content_type, 'application/json')
+        expected = {"id": 1, "firstname": "Luke", "lastname": "Skywalker"}
+        self.assertEqual(resp.json, expected)
+
 
 if __name__ == '__main__':
     unittest.main()
