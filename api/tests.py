@@ -27,12 +27,10 @@ class ModelTest(TestCase):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.TESTDB_NAME = f'test-{str(uuid4()).split("-")[0]}.db'
 
     def create_app(self):
         app = create_app()
         app.config['TESTING'] = True
-        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{self.TESTDB_NAME}'
         return app
 
     def setUp(self):
@@ -41,7 +39,6 @@ class ModelTest(TestCase):
     def tearDown(self):
         db.session.remove()
         db.drop_all()
-        os.remove(self.TESTDB_NAME)
 
     @with_config({"photo": {"type": "image", "additional_type_parameters": {"accepted_types": ["png"]}}})
     def test_delete_files_on_model_delete(self):
