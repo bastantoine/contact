@@ -3,8 +3,10 @@ import os
 from tempfile import NamedTemporaryFile
 import unittest
 from uuid import uuid4
+import warnings
 
 from flask_testing import TestCase
+from sqlalchemy.exc import SAWarning
 
 from main import create_app
 from models import db
@@ -22,7 +24,7 @@ def with_config(config):
         return wrapper
     return decorated
 
-def with_instances(*instances):
+def with_instances(*instances, ignore_deleted_on_delete=False):
     def decorated(func):
         def wrapper(*args, **kwargs):
             created_instances = []
@@ -41,9 +43,19 @@ def with_instances(*instances):
                     filtered_args.append(arg)
 
             resp = func(test_case_instance, created_instances, *filtered_args, **kwargs)
-            for instance in created_instances:
-                db.session.delete(instance)
-            db.session.commit()
+
+            with warnings.catch_warnings():
+                if ignore_deleted_on_delete:
+                    # When we try to delete an instance that has already been deleted before, we'll
+                    # get a warning "SAWarning: DELETE statement on table 'contact' expected to
+                    # delete xx row(s); yy were matched.  Please set confirm_deleted_rows=False
+                    # within the mapper configuration to prevent this warning.". We can't
+                    # dynamically set confirm_deleted_rows=False, so it's easier to simply ignore
+                    # the warning when needed.
+                    warnings.simplefilter('ignore', category=SAWarning)
+                for instance in created_instances:
+                    db.session.delete(instance)
+                db.session.commit()
             return resp
         return wrapper
     return decorated
@@ -118,6 +130,13 @@ class ApiTest(BaseTestCase):
         self.assertEqual(resp.content_type, 'application/json')
         expected = {"id": 1, "firstname": "Kylo", "lastname": "Ren"}
         self.assertEqual(resp.json, expected)
+
+    @with_config({"firstname": {"type": "str"}, "lastname": {"type": "str"}})
+    @with_instances({"firstname": "Ben", "lastname": "Solo"}, ignore_deleted_on_delete=True)
+    def test_contact_id_delete(self, _):
+        resp = self.client.delete('/contact/1')
+        self.assert200(resp)
+        self.assertEqual(resp.data, b'')
 
 
 if __name__ == '__main__':
