@@ -13,14 +13,22 @@ from models import db
 from views import create_or_update_contact_instance_or_abort
 
 
-def with_config(config):
+def with_config(config, working_dir=None):
     def decorated(func):
         def wrapper(*args, **kwargs):
-            with NamedTemporaryFile(mode='w+') as temp_config:
+            with NamedTemporaryFile(mode='w+', dir=working_dir, suffix=".json") as temp_config:
                 temp_config.write(json.dumps(config))
                 temp_config.flush()
-                os.environ['CONFIG_FILE'] = temp_config.name
-                return func(*args, **kwargs)
+                # Save the current value of CONFIG_FILE for the env to be able to restore it later.
+                old_config_path = os.getenv('CONFIG_FILE')
+                # Make sure we provide a relative path, even if the file is in the cwd, otherwise
+                # werkzeug wont be able to process it.
+                os.environ['CONFIG_FILE'] = os.path.relpath(temp_config.name)
+                resp = func(*args, **kwargs)
+                if old_config_path:
+                    # Restore CONFIG_FILE to its old value
+                    os.environ['CONFIG_FILE'] = old_config_path
+                return resp
         return wrapper
     return decorated
 
@@ -63,6 +71,8 @@ def with_instances(*instances, ignore_deleted_on_delete=False):
 
 class BaseTestCase(TestCase):
 
+    old_config_path = ""
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
@@ -73,10 +83,13 @@ class BaseTestCase(TestCase):
 
     def setUp(self):
         db.create_all()
+        self.old_config_path = os.getenv('CONFIG_FILE')
+        del os.environ['CONFIG_FILE']
 
     def tearDown(self):
         db.session.remove()
         db.drop_all()
+        os.environ['CONFIG_FILE'] = self.old_config_path
 
 
 class ModelTest(BaseTestCase):
@@ -137,6 +150,21 @@ class ApiTest(BaseTestCase):
         resp = self.client.delete('/contact/1')
         self.assert200(resp)
         self.assertEqual(resp.data, b'')
+
+    # This test will trigger a "ResourceWarning: unclosed file" warning, because it looks like Flask
+    # never closes the file when sending it from directory (see flask.helpers:send_file). This
+    # function was moved to Werkzeug in Flask 2.0.0, so perhaps it'll be fixed then. To be checked
+    # later.
+    @with_config({"id": {"type": "str", "primary_key": True, "required": True}, "firstname": {"type": "str"}}, working_dir=".")
+    def test_config_get(self):
+        resp = self.client.get('/config')
+        self.assert200(resp)
+        self.assertEqual(resp.content_type, 'application/json')
+        expected = {"id": {"type": "str", "primary_key": True, "required": True}, "firstname": {"type": "str"}}
+        self.assertEqual(resp.json, expected)
+
+        resp = self.client.put('/config', json=dict(**expected, lastname={"type": "str"}))
+        self.assert200(resp)
 
 
 if __name__ == '__main__':
