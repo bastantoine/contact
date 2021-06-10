@@ -8,6 +8,11 @@ import warnings
 from flask_testing import TestCase
 from sqlalchemy.exc import SAWarning
 
+from config import (
+    InvalidConfigException,
+    validate_config,
+    validate_config_file
+)
 from main import create_app
 from models import db
 from views import create_or_update_contact_instance_or_abort
@@ -165,6 +170,45 @@ class ApiTest(BaseTestCase):
 
         resp = self.client.put('/config', json=dict(**expected, lastname={"type": "str"}))
         self.assert200(resp)
+
+
+class ConfigTest(unittest.TestCase):
+
+    def test_validate_config_file(self):
+        with NamedTemporaryFile(mode='w+', suffix=".json") as temp_config:
+            # Invalid file
+            wrong_filename = ('.'.join(temp_config.name.split('.')[:-1]) +
+                             str(uuid4()).split('-')[0] + # Add uuid to make sure the file doesn't exists
+                             '.json')
+            status, msg = validate_config_file(wrong_filename)
+            self.assertFalse(status)
+            self.assertEqual(msg, f'Invalid file with filename {wrong_filename}')
+
+            # Invalid JSON
+            temp_config.write('a')
+            temp_config.flush()
+            status, msg = validate_config_file(temp_config.name)
+            self.assertFalse(status)
+            self.assertEqual(msg, 'File is not a valid JSON')
+
+            # Invalid config
+            temp_config.seek(0)
+            temp_config.write(json.dumps({"firstname": {"type": "str"}, "lastname": {"type": "str"}}))
+            temp_config.flush()
+            status, msg = validate_config_file(temp_config.name)
+            self.assertFalse(status)
+            self.assertEqual(msg, 'No parameter marked as "primary_key" found')
+
+            # Valid config
+            temp_config.seek(0)
+            temp_config.write(json.dumps({
+                "id": {"type": "integer", "primary_key": True, "required": True},
+                "firstname": {"type": "str"}
+            }))
+            temp_config.flush()
+            status, msg = validate_config_file(temp_config.name)
+            self.assertTrue(status)
+            self.assertEqual(msg, 'Valid config file!')
 
 
 if __name__ == '__main__':
