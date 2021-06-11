@@ -210,6 +210,374 @@ class ConfigTest(unittest.TestCase):
             self.assertTrue(status)
             self.assertEqual(msg, 'Valid config file!')
 
+    def test_valid_config(self):
+        params = [
+            # primary key related configs
+            {
+                'name': 'No primary key',
+                'config': {
+                    "name": {},
+                },
+                'exception_params': {
+                    'field': '',
+                    'param': 'primary_key',
+                    'msg': 'No parameter marked as "primary_key" found',
+                }
+            },
+            {
+                'name': 'More than one primary key found',
+                'config': {
+                    "id": {"primary_key": True},
+                    "id2": {"primary_key": True},
+                },
+                'exception_params': {
+                    'field': ['id', 'id2'],
+                    'param': 'primary_key',
+                    'msg': 'Found 2 parameters marked as "primary_key": id, id2',
+                }
+            },
+            {
+                'name': 'Primary key was not marked as required',
+                'config': {
+                    "id": {"primary_key": True},
+                },
+                'exception_params': {
+                    'field': 'id',
+                    'param': 'required',
+                    'msg': 'Parameter marked as primary_key must also be marked as "required"',
+                }
+            },
+
+            {
+                'name': '"type" parameter is required',
+                'config': {
+                    "id": {"primary_key": True, "required": True},
+                },
+                'exception_params': {
+                    'field': 'id',
+                    'param': 'type',
+                    'msg': 'Invalid value of parameter "type" for field "id": None',
+                }
+            },
+
+            # Config params specifics to "type": "list"
+            {
+                'name': '"additional_type_parameters" parameter is required with "type": "list"',
+                'config': {
+                    "param": {"type": "list"}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'additional_type_parameters',
+                    'msg': 'Missing parameter "additional_type_parameters" from field "param" of "type": "list"',
+                }
+            },
+            {
+                'name': '"additional_type_parameters" parameter must be a dict "type": "list"',
+                'config': {
+                    "param": {"type": "list", "additional_type_parameters": []}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'additional_type_parameters',
+                    'msg': 'Invalid value of parameter "additional_type_parameters" for field "param": []',
+                }
+            },
+            {
+                'name': 'Cannot have "inner_type": "list" with "type": "list"',
+                'config': {
+                    "param": {"type": "list", "additional_type_parameters": {
+                        "inner_type": "list"
+                    }}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'inner_type',
+                    'msg': 'Found parameter param of "type": "list" with "inner_type": "list"',
+                }
+            },
+
+            # Config params specifics to "type": "select"
+            {
+                'name': '"additional_type_parameters" parameter is required with "type": "select"',
+                'config': {
+                    "param": {"type": "select"},
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'additional_type_parameters',
+                    'msg': 'Missing parameter "additional_type_parameters" from field "param" of "type": "select"',
+                }
+            },
+            {
+                'name': '"additional_type_parameters" parameter must be a dict "type": "select"',
+                'config': {
+                    "param": {"type": "select", "additional_type_parameters": []}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'additional_type_parameters',
+                    'msg': 'Invalid value of parameter "additional_type_parameters" for field "param": []',
+                }
+            },
+            {
+                'name': '"allowed_values" param must be a list with "type": "select"',
+                'config': {
+                    "param": {"type": "select", "additional_type_parameters": {
+                        "allowed_values": "a"
+                    }}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'allowed_values',
+                    'msg': 'Invalid value of parameter "allowed_values" for field "param": a',
+                }
+            },
+            {
+                'name': 'All values of "allowed_values" param must be strings with "type": "select"',
+                'config': {
+                    "param": {"type": "select", "additional_type_parameters": {
+                        "allowed_values": ["a", 1]
+                    }}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'allowed_values',
+                    'msg': "Invalid value of parameter \"allowed_values\" for field \"param\": ['a', 1]",
+                }
+            },
+
+            # Config params specifics to "type": "image"
+            {
+                'name': '"additional_type_parameters" parameter must be a dict if provided with "type": "image"',
+                'config': {
+                    "param": {"type": "image", "additional_type_parameters": []}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'additional_type_parameters',
+                    'msg': 'Invalid value of parameter "additional_type_parameters" for field "param": []',
+                }
+            },
+            {
+                'name': '"accepted_types" param must be provided with "type": "image"',
+                'config': {
+                    "param": {"type": "image", "additional_type_parameters": {}}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'accepted_types',
+                    'msg': 'Missing parameter "accepted_types" from field "param" of "type": "list"',
+                }
+            },
+            {
+                'name': '"accepted_types" param must be a list with "type": "image"',
+                'config': {
+                    "param": {"type": "image", "additional_type_parameters": {
+                        "accepted_types": "a"
+                    }}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'accepted_types',
+                    'msg': "Invalid value of parameter \"accepted_types\" for field \"param\": a",
+                }
+            },
+            {
+                'name': '"accepted_types" param cannot be an empty list with "type": "image"',
+                'config': {
+                    "param": {"type": "image", "additional_type_parameters": {
+                        "accepted_types": []
+                    }}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'accepted_types',
+                    'msg': "Invalid value of parameter \"accepted_types\" for field \"param\": []",
+                }
+            },
+            {
+                'name': '"accepted_types" param must be a list of only strings with "type": "image"',
+                'config': {
+                    "param": {"type": "image", "additional_type_parameters": {
+                        "accepted_types": ["a", 1]
+                    }}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'accepted_types',
+                    'msg': "Invalid value of parameter \"accepted_types\" for field \"param\": ['a', 1]",
+                }
+            },
+
+            # Config params specifics to "type": "toggle"
+            {
+                'name': '"additional_type_parameters" parameter must be a dict if provided with "type": "toggle"',
+                'config': {
+                    "param": {"type": "toggle", "additional_type_parameters": []}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'additional_type_parameters',
+                    'msg': 'Invalid value of parameter "additional_type_parameters" for field "param": []',
+                }
+            },
+            {
+                'name': '"additional_type_parameters" param cannot be empty with "type": "toggle"',
+                'config': {
+                    "param": {"type": "toggle", "additional_type_parameters": {}}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': ['value_true', 'value_false'],
+                    'msg': 'Missing parameter "[\'value_true\', \'value_false\']" from field "param" of "type": "toggle"',
+                }
+            },
+            {
+                'name': '"value_true" param must be a str with "type": "toggle"',
+                'config': {
+                    "param": {"type": "toggle", "additional_type_parameters": {
+                        "value_true": 1
+                    }}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'value_true',
+                    'msg': "Invalid value of parameter \"value_true\" for field \"param\": 1",
+                }
+            },
+            {
+                'name': '"value_false" param must be a str with "type": "toggle"',
+                'config': {
+                    "param": {"type": "toggle", "additional_type_parameters": {
+                        "value_true": "yes", "value_false": 1
+                    }}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'value_false',
+                    'msg': "Invalid value of parameter \"value_false\" for field \"param\": 1",
+                }
+            },
+            {
+                'name': 'Must have both "value_true" and "value_false" at the same time with "type": "toggle"',
+                'config': {
+                    "param": {"type": "toggle", "additional_type_parameters": {
+                        "value_true": ''
+                    }}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'value_false',
+                    'msg': "Invalid value of parameter \"value_false\" for field \"param\": None",
+                }
+            },
+            {
+                'name': 'Must have both "value_true" and "value_false" at the same time with "type": "toggle"',
+                'config': {
+                    "param": {"type": "toggle", "additional_type_parameters": {
+                        "value_false": ''
+                    }}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'value_true',
+                    'msg': "Invalid value of parameter \"value_true\" for field \"param\": None",
+                }
+            },
+
+            {
+                'name': 'If provided, "display_name" must be a str',
+                'config': {
+                    "param": {"type": "str", "display_name": 1}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'display_name',
+                    'msg': "Invalid value of parameter \"display_name\" for field \"param\": 1",
+                }
+            },
+            {
+                'name': 'If provided, "form_help_text" must be a str',
+                'config': {
+                    "param": {"type": "str", "form_help_text": 1}
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': 'param',
+                    'param': 'form_help_text',
+                    'msg': "Invalid value of parameter \"form_help_text\" for field \"param\": 1",
+                }
+            },
+            {
+                'name': 'Cannot have two params with the same "sort_key" value',
+                'config': {
+                    "param1": {"type": "str", "sort_key": 1},
+                    "param2": {"type": "str", "sort_key": 1},
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': ['param1', 'param2'],
+                    'param': 'sort_key',
+                    'msg': 'Found 2 parameters with "sort_key": "1"',
+                }
+            },
+            {
+                'name': 'Cannot have two params with the same "main_attribute" value',
+                'config': {
+                    "param1": {"type": "str", "main_attribute": 1},
+                    "param2": {"type": "str", "main_attribute": 1},
+                },
+                'with_pk': True,
+                'exception_params': {
+                    'field': ['param1', 'param2'],
+                    'param': 'main_attribute',
+                    'msg': 'Found 2 parameters with "main_attribute": "1"',
+                }
+            },
+        ]
+        for param in params:
+            with self.subTest(msg=param['name']):
+                config = param['config']
+                if param.get('with_pk', False):
+                    # Include a primary key field if told so. This way we don't have to include it
+                    # manually each time we are testing something not related to the primary key
+                    # config (like almost all the time).
+                    config.update({
+                        str(uuid4()).split('-')[0]: {"primary_key": True, "required": True, "type": "integer"}
+                    })
+                try:
+                    validate_config(config)
+                except InvalidConfigException as got:
+                    if type(got.field) == list:
+                        self.assertCountEqual(got.field, param['exception_params']['field'])
+                    else:
+                        self.assertEqual(got.field, param['exception_params']['field'])
+                    if type(got.param) == list:
+                        self.assertCountEqual(got.param, param['exception_params']['param'])
+                    else:
+                        self.assertEqual(got.param, param['exception_params']['param'])
+                    self.assertEqual(got.message, param['exception_params']['msg'])
+
 
 if __name__ == '__main__':
     unittest.main()
