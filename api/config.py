@@ -354,13 +354,12 @@ def validate_config(config: dict):
                     value=allowed_values
                 )
             if any(not isinstance(value, str) for value in allowed_values):
-                if not isinstance(value, list):
-                    raise InvalidConfigException(
-                        parameter_name,
-                        'allowed_values',
-                        INVALID_VALUE_OF_PARAMETER,
-                        value=allowed_values
-                    )
+                raise InvalidConfigException(
+                    parameter_name,
+                    'allowed_values',
+                    INVALID_VALUE_OF_PARAMETER,
+                    value=allowed_values
+                )
 
         if param_type == 'image' and params.get('additional_type_parameters') is not None:
             # In case a field of type 'image' has a 'additional_type_parameters' attribute, check
