@@ -36,6 +36,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
+          directory: api
           files: ./coverage.xml
           flags: unittest
           env_vars: PY${{ matrix.python-version }}
