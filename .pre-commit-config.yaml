@@ -13,3 +13,4 @@ repos:
       - id: prettier
         additional_dependencies:
           - prettier@2.3.0
+        exclude: '.(yml|yaml)$'

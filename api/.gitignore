@@ -14,3 +14,7 @@ config.json
 
 # Upload folder
 uploads
+
+# Coverage files
+.coverage
+htmlcov/**

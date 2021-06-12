@@ -234,12 +234,6 @@ def validate_config(config: dict):
     MISSING_PARAMETER_FROM_FIELD_TEMPLATE = 'Missing parameter "{param}" from field "{field}"'
     INVALID_VALUE_OF_PARAMETER = 'Invalid value of parameter "{param}" for field "{field}": {value}'
 
-    # Config mustn't have two identical keys
-    keys = list(config.keys())
-    for key in keys:
-        if keys.count(key) > 1:
-            raise InvalidConfigException(key, '', f'Duplicate key found: {key}')
-
     # Config must have one and only one parameter marked as primary_key
     primary_key = {k: v for k, v in config.items() if v.get('primary_key')}
     if len(primary_key) == 0:
@@ -360,13 +354,12 @@ def validate_config(config: dict):
                     value=allowed_values
                 )
             if any(not isinstance(value, str) for value in allowed_values):
-                if not isinstance(value, list):
-                    raise InvalidConfigException(
-                        parameter_name,
-                        'allowed_values',
-                        INVALID_VALUE_OF_PARAMETER,
-                        value=allowed_values
-                    )
+                raise InvalidConfigException(
+                    parameter_name,
+                    'allowed_values',
+                    INVALID_VALUE_OF_PARAMETER,
+                    value=allowed_values
+                )
 
         if param_type == 'image' and params.get('additional_type_parameters') is not None:
             # In case a field of type 'image' has a 'additional_type_parameters' attribute, check
