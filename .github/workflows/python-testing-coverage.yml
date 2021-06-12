@@ -1,0 +1,42 @@
+name: Python testing and coverage
+
+on:
+  push:
+    branches: [master]
+    paths:
+      api/*
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: api
+
+jobs:
+  testing-coverage:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install common dependencies
+        run: pip install -r requirements.txt
+      - name: Install testing dependencies
+        run: pip install -r requirements.test.txt
+      - name: Run tests and code coverage and generate report
+        run: |
+          coverage run -m unittest discover
+          coverage xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          files: ./coverage.xml
+          flags: unittest
+          fail_ci_if_error: true
+          verbose: true
