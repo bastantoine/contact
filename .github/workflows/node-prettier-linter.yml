@@ -4,7 +4,8 @@ on:
   push:
     branches: [master]
     paths:
-      front/*
+      - front/*
+      - .github/workflows/node-prettier-linter.yml
   pull_request:
     branches: [master]
   workflow_dispatch:

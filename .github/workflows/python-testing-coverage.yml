@@ -4,7 +4,8 @@ on:
   push:
     branches: [master]
     paths:
-      api/*
+      - api/*
+      - .github/workflows/python-testing-coverage.yml
   pull_request:
     branches: [master]
   workflow_dispatch:
