@@ -89,12 +89,16 @@ class BaseTestCase(TestCase):
     def setUp(self):
         db.create_all()
         self.old_config_path = os.getenv('CONFIG_FILE')
-        del os.environ['CONFIG_FILE']
+        if os.getenv('CONFIG_FILE'):
+            # Delete the old value only if needed
+            del os.environ['CONFIG_FILE']
 
     def tearDown(self):
         db.session.remove()
         db.drop_all()
-        os.environ['CONFIG_FILE'] = self.old_config_path
+        if self.old_config_path:
+            # Restore the old value only if needed
+            os.environ['CONFIG_FILE'] = self.old_config_path
 
 
 class ModelTest(BaseTestCase):
