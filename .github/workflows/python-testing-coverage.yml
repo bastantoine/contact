@@ -38,5 +38,6 @@ jobs:
         with:
           files: ./coverage.xml
           flags: unittest
+          env_var: PY${{ matrix.python-version }}
           fail_ci_if_error: true
           verbose: true
